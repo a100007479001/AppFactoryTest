@@ -1,1 +1,0 @@
-FOR %%i IN (%1/*.lua) DO (formatter.exe -o %2/%%i %1/%%i)
