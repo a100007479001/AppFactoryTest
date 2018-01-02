@@ -1,0 +1,55 @@
+<project name="SPA Copy Files" basedir="." default="all">
+   
+	<target name="init">
+		<taskdef resource="net/sf/antcontrib/antcontrib.properties">
+	      <classpath>
+	        <pathelement location="${plugin.loc}/lib/ant-contrib-0.6.jar"/>
+	      </classpath>
+	    </taskdef>
+	</target>
+		
+	<target name="copyfiles">
+		<copy todir="${dest.dir}">
+			<fileset dir="${css.dir}" includes="**/*.css"/>
+		</copy>
+		<if>
+			<equals arg1="${spa.available}" arg2="true"/>
+			<then>
+				<copy todir="${dest.dir}/jslib">
+					<fileset dir="${spa.dir}"/>
+				</copy>
+			</then>
+		</if>
+	</target>
+	
+	<!--  This target will be called for JS project, where native codegen is skipped.
+	This target copies the js files from jssrc folder to jsoutput/.. folder -->
+	<target name="copyjsfiles">
+		<echo>Copying JS files from ${js.dir} to ${dest.dir}/appjs</echo>
+		<copy todir="${dest.dir}/appjs">
+			<fileset dir="${js.dir}/generated" includes="*.js"/>
+			<fileset dir="${js.dir}/nongenerated" includes="*.js"/>
+			<fileset dir="${js.dir}/startup" includes="*.js"/>
+		</copy>
+	</target>
+	
+	<target name="concatcombo">
+		<condition property="excludeFiles4Desktopweb" value="konylibrary.js" else="">
+			<equals arg1="${desktop}" arg2="true"/>
+		</condition>
+		<echo message="Concatenating to ${dest.dir}/appjs/app.js"/>
+		<delete file="${dest.dir}/appjs/app.js" failonerror="false"/>
+		<concat fixlastline="yes" destfile="${dest.dir}/appjs/app.js" append="yes">
+			<fileset dir="${dest.dir}/appjs">
+				<include name="**/*.js"/>
+				<exclude name="appmodel.js"/>
+				<exclude name="${excludeFiles4Desktopweb}"/>
+			</fileset>
+		</concat>
+	</target>
+	
+	<target name="luaproject" depends="init,copyfiles,concatcombo"/>
+	<target name="jsproject" depends="init,copyfiles,copyjsfiles,concatcombo"/>
+	
+	<target name="all" depends="init"/>
+</project>

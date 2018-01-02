@@ -1,0 +1,11 @@
+//Any depedencies or 3 rd party libraries being used are to be included here, for example if
+// a samplelibrary has to be included (P.S the library should be using the gradle build format)and
+// is present in LibProjects at the application directory level the
+// below line is to be added
+//include ':LibProjects:samplelibrary'//comment out this line
+//In build.gradle  compile project(':LibProjects:samplelibrary') has to be enabled in depedencies
+//Similarly multiple libraries can be added.
+//Secondly if the library is present in the same directory level then the below line is to be added
+//include ':samplelibrary'//comment out this line.
+//In build.gradle compile project(':samplelibrary') has to be enabled in depedencies
+

@@ -1,0 +1,225 @@
+<!--@Note: This is read only file and not being used at runtime,if we want to update anything do it in zip file \trunk\guieditor\lib\build.zip --> 
+<project name="Kony" basedir="." default="build">
+   
+	<target name="build">
+
+		<unset name="logo"/>
+		<var name="logo" value="${logo_android}"/>
+		<unset name="splash.image"/>
+		<var name="splash.image" value="${splash.image_android}"/> 
+		
+		<delete dir="${codedir}" failonerror="false"/>
+		<mkdir dir="${codedir}"/>
+		<if>
+			<equals arg1="${android.hybridmode}" arg2="mixed"/>
+			<then>
+				<copy todir="${codedir}" overwrite="true">
+		   		    <fileset dir="../../${outputdir}/${codedir}hybrid" excludes="startup.lua,tcchannel.lua,rcchannel.lua" casesensitive="false"/>
+		   	 	</copy>
+				<available file="../../${outputdir}/${codedir}hybrid/android" type="dir" property="androidlua.present"/>
+				<if>
+					<equals arg1="${androidlua.present}" arg2="true" />
+					<then>
+						<copy todir="${codedir}" overwrite="true">
+				     		<fileset dir="../../${outputdir}/${codedir}hybrid/android" excludes="startup.lua,tcchannel.lua,rcchannel.lua" casesensitive="false"/>
+			    		</copy>
+					</then>
+				</if>
+			</then>
+			<else>
+				<if>
+					<equals arg1="${android.hybridmode}" arg2="native"/>
+					<then>
+						<copy todir="${codedir}" overwrite="true">
+				   		    <fileset dir="../../${outputdir}/${codedir}" excludes="startup.lua,tcchannel.lua,rcchannel.lua" casesensitive="false"/>
+				   	 	</copy>
+						<available file="../../${outputdir}/${codedir}/android" type="dir" property="androidlua.present"/>
+						<if>
+							<equals arg1="${androidlua.present}" arg2="true" />
+							<then>
+								<copy todir="${codedir}" overwrite="true">
+						     		<fileset dir="../../${outputdir}/${codedir}/android" excludes="startup.lua,tcchannel.lua,rcchannel.lua" casesensitive="false"/>
+					    		</copy>
+							</then>
+						</if>
+					</then>
+					<else>
+						<copy todir="${codedir}" overwrite="true">
+				   		    <fileset dir="../../${outputdir}/${codedir}wrapper" excludes="startup.lua,tcchannel.lua,rcchannel.lua" casesensitive="false"/>
+				   	 	</copy>
+						<available file="../../${outputdir}/${codedir}wrapper/android" type="dir" property="wrapperandroidlua.present"/>
+						<if>
+							<equals arg1="${wrapperandroidlua.present}" arg2="true" />
+							<then>
+								<copy todir="${codedir}" overwrite="true">
+						     		<fileset dir="../../${outputdir}/${codedir}wrapper/android" excludes="startup.lua,tcchannel.lua,rcchannel.lua" casesensitive="false"/>
+					    		</copy>
+							</then>
+						</if>
+					</else>
+				</if>
+			</else>
+		</if>
+
+		<delete dir="android"/>
+		<mkdir dir="android"/>
+		<mkdir dir="android/temp"/>
+		<delete dir ="resources"/>
+		<mkdir dir="resources"/>
+		
+        <available file="${fonts_workspace}/Android" type="dir" property="android.workspacefonts.present" /> 
+        <if>
+            <equals arg1="${android.workspacefonts.present}" arg2="true" /> 
+            <then>
+                <copy todir="resources" overwrite="true">
+                    <fileset dir="${fonts_workspace}/Android" includes="*.ttf"/>
+                </copy>
+            </then>
+        </if>
+		
+        <available file="${resfolder}/fonts/Android" type="dir" property="android.fonts.present" /> 
+        <if>
+            <equals arg1="${android.fonts.present}" arg2="true" /> 
+            <then>
+                <copy todir="${resfolder}" overwrite="true">
+                    <fileset dir="${resfolder}/fonts/Android" includes="*.ttf"/>
+                </copy>
+            </then>
+        </if>
+		
+		
+		<if>
+			<equals arg1="${android.hybridmode}" arg2="mixed"/>
+			<then>
+				<condition property="luasrcHybridAndroid" value="hybrid/nativeplatforms/android" else="android">
+					<equals arg1="${dev.language}" arg2="lua"/>
+				</condition>
+				<!--property name="luasrcHybridAndroid" value="hybrid/nativeplatforms/android"/-->
+				<!--Copy native headers/footers to lua before applying m4 -->
+				<available file="../../${outputdir}/${codedir}hybrid/native" type="dir" property="hybrid.nativelua.present"/>
+				<if>
+					<equals arg1="${hybrid.nativelua.present}" arg2="true"/>
+					<then>
+						<copy todir="${codedir}" failonerror="false">
+							<fileset dir="../../${outputdir}/${codedir}hybrid/native"></fileset>
+						</copy>
+					</then>
+				</if>
+				<available file="../../${outputdir}/${codedir}hybrid/native/android" type="dir" property="native.androidlua.present"/>
+				<if>
+					<equals arg1="${native.androidlua.present}" arg2="true" />
+					<then>
+						<copy todir="${codedir}" overwrite="true">
+				     		<fileset dir="../../${outputdir}/${codedir}hybrid/native/android" excludes="startup.lua,tcchannel.lua,rcchannel.lua" casesensitive="false"/>
+			    		</copy>
+					</then>
+				</if>
+				<createAndCopyToLuasrc dir.name="${luasrcHybridAndroid}" m4constant.name="m4android" output.lua.dir="${codedir}hybrid"/>
+				<if>
+					<equals arg1="${dev.language}" arg2="lua"/>
+					<then>
+						<exec executable="cmd.exe" failonerror="true" failifexecutionfails="true">
+							<env key="PATH" path="${env.PATH};${appfolder}/build/luacompiler"/>
+							<arg line='/c "luac${luaprefix} -o ${luac.file}${_debugluafile} ${project.loc}\luasrc\${luasrcHybridAndroid}\startup\rcchannel.lua ${project.loc}\luasrc\${luasrcHybridAndroid}\nongenerated\*.lua ${project.loc}\luasrc\${luasrcHybridAndroid}\generated\*.lua ${project.loc}\luasrc\${luasrcHybridAndroid}\startup\startup.lua"'/>
+						</exec>
+					</then>
+				</if>
+				
+				<!--Copy native headers/footers to lua before applying m4 -->
+				<available file="../../${outputdir}/${codedir}hybrid/static" type="dir" property="hybrid.staticlua.present"/>
+				<if>
+					<equals arg1="${hybrid.staticlua.present}" arg2="true"/>
+					<then>
+						<copy todir="${codedir}" failonerror="false">
+							<fileset dir="../../${outputdir}/${codedir}hybrid/static"></fileset>
+						</copy>
+					</then>
+				</if>
+				<available file="../../${outputdir}/${codedir}hybrid/static/android" type="dir" property="static.androidlua.present"/>
+				<if>
+					<equals arg1="${static.androidlua.present}" arg2="true" />
+					<then>
+						<copy todir="${codedir}" overwrite="true">
+				     		<fileset dir="../../${outputdir}/${codedir}hybrid/static/android" excludes="startup.lua,tcchannel.lua,rcchannel.lua" casesensitive="false"/>
+			    		</copy>
+					</then>
+				</if>
+				<createAndCopyToLuasrc dir.name="hybrid/spa/android" m4constant.name="m4spaan" output.lua.dir="${codedir}hybrid"/>
+			</then>
+			<else>
+				<if>
+					<equals arg1="${android.hybridmode}" arg2="wrapper"/>
+					<then>
+						<delete dir="androidwrappertemp"/>
+						<mkdir dir="androidwrappertemp"/>
+						<delete dir="androidwrapper"/>
+						<mkdir dir="androidwrapper"/>
+						<if>
+							<equals arg1="${dev.language}" arg2="lua"/>
+							<then>
+								<copy todir="androidwrappertemp">
+									<fileset dir="../../output/luawrapper" includes="globalsinit_native.lua"/>
+								</copy>
+								<exec executable="${basedir}/m4routine.bat" failonerror="true" failifexecutionfails="true">
+									<env key="PATH" path="${env.PATH};${basedir}/m4.exe;${basedir}/regex2.dll;"/>
+									<arg value="androidwrappertemp"/>
+									<arg value="androidwrapper"/>
+									<arg value="m4android"/>
+								</exec>
+								<delete dir="androidwrappertemp"/>
+								<copy todir="androidwrapper">
+									<fileset dir="${project.loc}\luasrc\wrapper\android\generated" excludes="globalsinit.lua"/>
+								</copy>
+								<exec executable="cmd.exe" failonerror="true" failifexecutionfails="true">
+									<env key="PATH" path="${env.PATH};${appfolder}/build/luacompiler"/>
+									<arg line='/c "luac${luaprefix} -o ${luac.file}${_debugluafile} ${project.loc}\luasrc\wrapper\android\startup\rcchannel.lua ${project.loc}\luasrc\wrapper\android\nongenerated\*.lua androidwrapper\*.lua ${project.loc}\luasrc\wrapper\android\startup\startup.lua"'/>
+								</exec>
+							</then>
+							<else>
+								<copy todir="androidwrappertemp">
+									<fileset dir="../../jsoutput/jswrapper" includes="startup_native.js"/>
+								</copy>
+								<exec-script executable="${node.file}" >
+									<arg value="${js.file}"/>
+									<arg value="${basedir}/androidwrappertemp"/>
+									<arg value="${basedir}/androidwrapper"/>
+									<arg value="android"/>
+									<arg value="${plugin.loc}/preview/node_mac"/>
+								</exec-script>
+								<delete dir="androidwrappertemp"/>
+								<delete dir="${project.loc}\jssrc\android"/>
+								<mkdir dir="${project.loc}\jssrc\android"/>
+								<copy todir="${project.loc}\jssrc\android">
+									<fileset dir="${project.loc}\jssrc\wrapper\android"/>
+								</copy>
+								<delete file="${project.loc}\jssrc\android\startup\startup_native.js"/>
+								<delete file="${project.loc}\jssrc\android\generated\startup_native.js"/>
+								<copy file="androidwrapper\startup_native.js" tofile="${project.loc}\jssrc\android\startup\startup.js" overwrite="true"/>
+							</else>
+						</if>
+					</then>
+					<else>
+						<createAndCopyToLuasrc dir.name="android" m4constant.name="m4android"/>
+						<if>
+							<equals arg1="${dev.language}" arg2="lua"/>
+							<then>
+								<exec executable="cmd.exe" failonerror="true" failifexecutionfails="true">
+									<env key="PATH" path="${env.PATH};${appfolder}/build/luacompiler"/>
+									<arg line='/c "luac${luaprefix} -o ${luac.file}${_debugluafile} ${project.loc}\luasrc\android\startup\rcchannel.lua ${project.loc}\luasrc\android\nongenerated\*.lua ${project.loc}\luasrc\android\generated\*.lua ${project.loc}\luasrc\android\startup\startup.lua"'/>
+								</exec>	
+							</then>
+						</if>
+					</else>
+				</if>
+			</else>
+		</if>
+		
+		<if>
+			<equals arg1="${dev.language}" arg2="lua"/>
+			<then>
+				<copy file="${luac.file}" tofile="${androidluac.file}" overwrite="true" /> 
+				<delete file ="${luac.file}"/>
+			</then>
+		</if>
+	</target>
+</project>

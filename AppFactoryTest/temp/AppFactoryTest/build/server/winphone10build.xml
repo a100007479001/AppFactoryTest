@@ -1,0 +1,140 @@
+<!--@Note: This is read only file and not being used at runtime,if we want to update anything do it in zip file \trunk\guieditor\lib\build.zip --> 
+<project name="Kony" basedir="." default="build">
+   
+	<target name="build">
+
+  		<unset name="logo"/>
+  		<var name="logo" value="${logo_winphone8}"/>
+  		<unset name="splash.image"/>
+  		<var name="splash.image" value="${splash.image_winphone8}"/>
+  		
+		<if>
+			<not>
+			<equals arg1="${winphone8.hybridmode}" arg2="wrapper"/>
+			</not>
+			<then>
+		  		<delete dir="${codedir}" failonerror="false"/>
+		  		<mkdir dir="${codedir}"/>
+		  		<copy todir="${codedir}" overwrite="true">
+		  		    <fileset dir="../../${outputdir}/${codedir}" excludes="startup.lua,tcchannel.lua,rcchannel.lua" casesensitive="false"/>
+		  	 	</copy>
+				<available file="../../${outputdir}/${codedir}/winphone8" type="dir" property="winphone8lua.present"/>
+				<if>
+					<equals arg1="${winphone8lua.present}" arg2="true" />
+					<then>
+		  				<copy todir="${codedir}" overwrite="true">
+		  		   			     <fileset dir="../../${outputdir}/${codedir}/winphone8" excludes="startup.lua,tcchannel.lua,rcchannel.lua" casesensitive="false"/>
+		  				</copy>
+					</then>
+				</if>
+			</then>
+		</if>
+
+		<delete dir="winphone10"/>
+		<mkdir dir="winphone10"/>
+  		<mkdir dir="winphone10/sequences"/>
+		<mkdir dir="winphone10/temp"/>
+  		<mkdir dir="winphone10/resources"/>
+
+		<delete dir ="resources"/>
+		<mkdir dir="resources"/>
+		
+		<copy todir="resources" overwrite="true">
+   			<fileset dir="${resfolder}/common"/>
+   				<fileset dir="${resfolder}/mobile/common"/>
+   			<fileset dir="${i18n.xml}" includes="**/*.*" casesensitive="false"/>   			
+   			
+   		</copy>
+	 
+        <available file="${fonts_workspace}/WinPhone8" type="dir" property="win.workspacefonts.present" /> 
+        <if>
+            <equals arg1="${win.workspacefonts.present}" arg2="true" /> 
+            <then>
+                <copy todir="resources" overwrite="true">
+                    <fileset dir="${fonts_workspace}/WinPhone8" includes="*.ttf"/>
+                </copy>
+            </then>
+        </if>
+    		
+		<copy todir="resources" overwrite="true">
+			<fileset dir="${resfolder}/mobile/native/winphone8"/>
+		</copy>
+  		
+
+		<if>
+		 <equals arg1="${wmlocales}" arg2="" />
+		 <then>
+		    
+		 </then>
+		 <else>
+		 	<touch file="winphone10/resources/i18n.txt"/>
+		 	 <concat fixlastline="yes" destfile="winphone10/resources/i18n.txt" append="true">${wmlocales}</concat>
+		 </else>
+		</if>
+		
+		
+		<touch file="winphone10/resources/themeslist.txt"/>
+		<concat fixlastline="yes" destfile="winphone10/resources/themeslist.txt" append="false">${wmthemes}</concat>
+		
+		
+		
+		<!--if>
+			<equals arg1="${dev.language}" arg2="lua"/>
+			<then>
+	  		<copy todir="winphone8/sequences">
+	  			<fileset dir="../../output/lua/winphone8/sequences" includes="*.lua"/>
+	  		</copy>
+	  		<touch file="winphone8/sequences/.temp.lua"/>
+			</then>
+		</if-->
+  		
+        <available file="${resfolder}/fonts/WinPhone8" type="dir" property="win.fonts.present" /> 
+        <if>
+            <equals arg1="${win.fonts.present}" arg2="true" /> 
+            <then>
+                <copy todir="resources" overwrite="true">
+                    <fileset dir="${resfolder}/fonts/WinPhone8" includes="*.ttf"/>
+                </copy>
+            </then>
+        </if>
+		
+		<createAndCopyToLuasrc dir.name="winphone8" m4constant.name="m4winphone8"/>
+		
+		<!--if>
+			<equals arg1="${winphone8.hybridmode}" arg2="wrapper"/>
+			<then>
+				<exec executable="cmd.exe" failonerror="true" failifexecutionfails="true">
+					<env key="PATH" path="${env.PATH};${appfolder}/build/luacompiler"/>
+					<arg line='/c "luac${luaprefix} -o ${luac.file}${_debugluafile} static_home.lua"'/>
+				</exec>
+			</then>
+			<else>
+				<createAndCopyToLuasrc dir.name="winphone8" m4constant.name="m4winphone8"/>
+				<if>
+					<equals arg1="${dev.language}" arg2="lua"/>
+					<then>	
+						<exec executable="cmd.exe" failonerror="true" failifexecutionfails="true">
+							<env key="PATH" path="${env.PATH};${appfolder}/build/luacompiler"/>
+							<arg line='/c "luac${luaprefix} -o ${luac.file} ${project.loc}\luasrc\winphone8\startup\rcchannel.lua ${project.loc}\luasrc\winphone8\nongenerated\*.lua ${project.loc}\luasrc\winphone8\generated\*.lua winphone8\sequences\*.lua ${project.loc}\luasrc\winphone8\startup\startup.lua"'/>
+						</exec>
+					</then>
+				</if>
+			</else>
+		</if-->
+		
+   		<copy todir="winphone10/resources" overwrite="true">
+   			<fileset dir="${basedir}/resources"/>
+   		</copy>
+  		
+		<!--if>
+			<equals arg1="${dev.language}" arg2="lua"/>
+			<then>
+		   		<copy todir="winphone8/resources" overwrite="true">
+		   			<fileset dir="${basedir}/resources" includes="konyapp.o" casesensitive="false"/>
+		   		</copy>
+				<copy file="${luac.file}" tofile="${winphone8luac.file}" overwrite="true" /> 
+				<delete file ="${luac.file}"/>
+			</then>
+		</if-->
+	</target>
+</project>

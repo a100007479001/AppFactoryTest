@@ -1,0 +1,660 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project name="build-jssource" basedir="."  default="copy-appsrc">
+	<taskdef name="escapejssource" classname="com.konylabs.android.anttask.EscapeJavaScriptSourceTask">
+		<classpath>
+			<pathelement location="extres/EscapeJavaScriptSourceTask.jar"/>
+			<pathelement location="extres/commons-lang-2.6.jar"/>
+		</classpath>
+	</taskdef>
+	
+	<taskdef resource="net/sf/antcontrib/antlib.xml"/>
+	<target name="yuicompress">
+		<echo message="/c java -jar extres/yuicompressor-2.4.6.jar ${theFile} -o ${theFile}" />
+		<exec-shell executable="cmd" failonerror="true" failifexecutionfails="true" >
+			<arg line='/c "java -jar extres/yuicompressor-2.4.6.jar ${theFile} -o ${theFile}"'/>
+		</exec-shell>
+	</target>
+	
+	<property name="functional.module.xml.file" value="functionalModules.xml"/>
+	<property name="minification.dir" value="${basedir}/minification"/>
+	<property name="functionalmodules.dir" value="${basedir}/functionalmodules"/>
+	
+	<available file="${jssrc.dir}/workerthreads" type="dir" property="mvc.workerthreads.dir.present"/>
+	<if>
+	<equals arg1="${mvc.workerthreads.dir.present}" arg2="true"/>
+	<then>
+		<fileset dir="${jssrc.dir}/workerthreads" id="workerthreadsFilesCheck"/>
+		<pathconvert refid="workerthreadsFilesCheck" property="mvc.workerthreads.dir.present" setonempty="false"/>	
+	</then>
+	</if>
+
+	<available file="${jssrc.dir}/default" type="dir" property="default.dir.present"/>
+	<if>
+	<equals arg1="${default.dir.present}" arg2="true"/>
+	<then>
+		<fileset dir="${jssrc.dir}/default" id="defaultFilesCheck"/>
+		<pathconvert refid="defaultFilesCheck" property="default.dir.present" setonempty="false"/>
+	</then>
+	</if>	
+
+	<available file="${jssrc.dir}/require" type="dir" property="require.dir.present"/>
+	<if>
+	<equals arg1="${require.dir.present}" arg2="true"/>
+	<then>
+		<fileset dir="${jssrc.dir}/require" id="requireFilesCheck"/>
+		<pathconvert refid="requireFilesCheck" property="require.dir.present" setonempty="false"/>
+	</then>
+	</if>
+	
+	<available file="${jssrc.dir}/generated" type="dir" property="generated.dir.present"/>
+	<if>
+	<equals arg1="${generated.dir.present}" arg2="true"/>
+	<then>
+		<fileset dir="${jssrc.dir}/generated" id="generatedFilesCheck"/>
+		<pathconvert refid="generatedFilesCheck" property="generated.dir.present" setonempty="false"/>	
+	</then>
+	</if>	
+	
+	
+	<available file="${jssrc.dir}/nongenerated" type="dir" property="nongenerated.dir.present"/>
+	<if>
+	<equals arg1="${nongenerated.dir.present}" arg2="true"/>
+	<then>
+		<fileset dir="${jssrc.dir}/nongenerated" id="nongeneratedFilesCheck"/>
+		<pathconvert refid="nongeneratedFilesCheck" property="nongenerated.dir.present" setonempty="false"/>
+	</then>
+	</if>		
+	
+	<target name="compress">
+        <echo>Compressing the android ${appid} application</echo>
+		<delete dir="${minification.dir}"/>
+		<mkdir dir="${minification.dir}"/>
+		
+		<available file="${jssrc.dir}" type="dir" property="jssrc.present"/>
+		<if>
+			<equals arg1="${jssrc.present}" arg2="true"/>
+			<then>
+			
+				<mkdir dir="${minification.dir}/startup"/>
+				<copy todir="${minification.dir}/startup" overwrite="true">
+					<fileset dir="${jssrc.dir}/startup" includes="*.*"/>		
+				</copy>
+
+				<if>
+				<equals arg1="${require.dir.present}" arg2="true"/>
+				<then>
+					<mkdir dir="${minification.dir}/require"/>
+					<copy todir="${minification.dir}/require" overwrite="true">
+						<fileset dir="${jssrc.dir}/require" includes="**/*.*"/>
+					</copy>					
+				</then>
+				</if>				
+
+				<if>
+				<equals arg1="${default.dir.present}" arg2="true"/>
+				<then>
+					<mkdir dir="${minification.dir}/default"/>
+					<copy todir="${minification.dir}/default" overwrite="true">
+						<fileset dir="${jssrc.dir}/default" includes="*.*"/>
+					</copy>						
+				</then>
+				</if>				
+
+				<if>
+				<equals arg1="${mvc.workerthreads.dir.present}" arg2="true"/>
+				<then>
+					<mkdir dir="${minification.dir}/workerthreads"/>				
+					<copy todir="${minification.dir}/workerthreads" overwrite="true">
+						<fileset dir="${jssrc.dir}/workerthreads" includes="**/*.*"/>
+					</copy>					
+				</then>
+				</if>
+
+				<if>
+				<equals arg1="${nongenerated.dir.present}" arg2="true"/>
+				<then>
+					<mkdir dir="${minification.dir}/nongenerated"/>
+					<copy todir="${minification.dir}/nongenerated" overwrite="true">
+						<fileset dir="${jssrc.dir}/nongenerated" includes="**/*.*"/>
+					</copy>						
+				</then>
+				</if>
+
+				<if>
+				<equals arg1="${generated.dir.present}" arg2="true"/>
+				<then>
+					<mkdir dir="${minification.dir}/generated"/>
+					<copy todir="${minification.dir}/generated" overwrite="true">
+						<fileset dir="${jssrc.dir}/generated" includes="*.*"/>
+					</copy>					
+				</then>
+				</if>	
+					
+				<echo message="enableawssdk = ${enableawssdk} ${line.separator} awssdkfileloc = ${awssdkfileloc}  ${line.separator}"/>				
+				<if>
+					<equals arg1="${enableawssdk}" arg2="true"/>
+					<then>
+						<mkdir dir="${minification.dir}/awssdk"/>
+						<available file="${awssdkfileloc}" property="awsfile.present"/>
+						<available file="${awssdkfileloc}" type="dir" property="awsfolder.present"/>
+						<if>
+							<equals arg1="${awsfile.present}" arg2="true"/>
+							<then>
+								<copy file="${awssdkfileloc}" todir="${minification.dir}/awssdk/" overwrite="true"/>
+							 </then>						
+						<elseif>
+							<equals arg1="${awsfolder.present}" arg2="true"/>
+							<then>
+								<copy todir="${minification.dir}/awssdk" overwrite="true">
+									<fileset dir="${awssdkfileloc}" includes="*.js"/>
+								</copy>
+							</then>
+						</elseif>
+						<else>
+							<echo message="awssdkfileloc = ${awssdkfileloc} defined but no file or folder present"/>
+						</else>
+						</if>						
+					</then>
+				</if>
+
+				<condition property="doMinification">
+					<and>
+						<not>
+							<equals arg1="${build.option}" arg2="debug"/>
+							<!-- Handles both release and protected cases-->
+						</not>
+						<equals arg1="${minify}" arg2="true"/>
+					</and>
+				</condition>
+
+				<if>
+					<equals arg1="${doMinification}" arg2="true"/>
+					<then>
+						<foreach target="yuicompress" param="theFile">
+							<fileset dir="${minification.dir}/startup" casesensitive="yes">
+							</fileset>
+						</foreach>
+						
+						<if>
+						<equals arg1="${default.dir.present}" arg2="true"/>
+						<then>
+							<foreach target="yuicompress" param="theFile">
+								<fileset dir="${minification.dir}/default" casesensitive="yes">
+								</fileset>
+							</foreach>								
+						</then>
+						</if>
+						
+						<if>
+						<equals arg1="${require.dir.present}" arg2="true"/>
+						<then>
+							<foreach target="yuicompress" param="theFile">
+								<fileset dir="${minification.dir}/require" casesensitive="yes" includes="**/*.*">
+								</fileset>
+							</foreach>							
+						</then>
+						</if>						
+						
+						<if>
+						<equals arg1="${mvc.workerthreads.dir.present}" arg2="true"/>
+						<then>
+							<foreach target="yuicompress" param="theFile">
+								<fileset dir="${minification.dir}/workerthreads" casesensitive="yes" includes="**/*.*">
+								</fileset>
+							</foreach>								
+						</then>
+						</if>
+
+						<if>
+						<equals arg1="${generated.dir.present}" arg2="true"/>
+						<then>
+							<foreach target="yuicompress" param="theFile">
+								<fileset dir="${minification.dir}/generated" casesensitive="yes">
+								</fileset>
+							</foreach>					
+						</then>
+						</if>	
+
+						<if>
+						<equals arg1="${nongenerated.dir.present}" arg2="true"/>
+						<then>
+							<foreach target="yuicompress" param="theFile">
+								<fileset dir="${minification.dir}/nongenerated" casesensitive="yes" includes="**/*.*">
+								</fileset>
+							</foreach>							
+						</then>
+						</if>
+
+						<if>
+							<equals arg1="${enableawssdk}" arg2="true"/>
+							<then>
+								<foreach target="yuicompress" param="theFile">
+									<fileset dir="${minification.dir}/awssdk" casesensitive="yes">
+									</fileset>
+								</foreach>							
+							</then>
+						</if>
+						
+					</then>
+				</if>
+			</then>
+		</if>	
+    </target>
+	
+	<target name="copy-appsrc">
+		<antcall target="compress"/>
+		<delete dir="${assets.dir}/js"/>
+		<mkdir dir="${assets.dir}/js"/>
+		<antcall target="copy-webassets"/>
+		<if>
+			<equals arg1="${enablecordova}" arg2="true"/>
+			<then>
+				<trycatch>
+					<try>
+						<if>
+							<equals arg1="${os.family}" arg2="windows"/>
+							<then>
+								<echo>Substituting drive</echo>							
+								<exec executable="cmd" >
+									<arg value='/c subst-drive.bat substitute ${project.loc} '/>
+								</exec>
+								<if>
+									<available file="build-drive.txt"/>
+									<then>
+										<loadfile property="subst-drive" srcfile="build-drive.txt"/>
+										<length file="build-drive.txt" property="length.subst-drive"/>
+										<echo>subst-drive length ${length.subst-drive}</echo>
+										<if>
+											<equals arg1="${length.subst-drive}" arg2="1"/>
+										<then>
+											<property name="cordova-build.dir" value="${subst-drive}:\"/>
+										</then>
+										<else>
+											<property name="cordova-build.dir" value="${project.loc}"/>
+										</else>
+										</if>
+									</then>
+									<else>
+										<property name="cordova-build.dir" value="${project.loc}"/>
+									</else>
+								</if>
+							</then>
+							<else>
+								<property name="cordova-build.dir" value="${project.loc}"/>
+							</else>
+						</if>
+						<echo>cordova-build.dir is  ${cordova-build.dir}</echo>
+						<if>
+							<equals arg1="${cordovaglobal}" arg2="false"/>
+							<then>
+							   <ant dir="." antfile="build-cordova.xml" inheritAll="true">
+									<property name="cordova-exec" value="${cordovapath}/cordova"/>
+							   </ant>
+							</then>
+							<else>
+								<ant dir="." antfile="build-cordova.xml" inheritAll="true">
+									<property name="cordova-exec" value="cordova"/>
+							   </ant>
+							</else>
+						</if>
+					</try>
+					<finally>
+						<if>
+							<available file="build-drive.txt"/>
+							<then>
+								<exec executable="cmd">
+									<arg value="/c subst-drive.bat unsubstitute ${subst-drive} "/>
+								</exec>
+							</then>
+						</if>
+					</finally>
+				</trycatch>	
+			</then>
+			<else>
+				<replace file="${app.dir}/build.gradle" token="$COMPILE_CORDOVA_LIB" value=""/>
+			</else>
+		</if>
+		<antcall target="gen-ffi-loading"/>
+		<antcall target="zip-common-jslibs"/>
+		<antcall target="zip-workerthreads"/>
+		<antcall target="gen-zip-files"/>
+		<if>
+			<equals arg1="${secureappsource}" arg2="true"/>
+			<then>
+				<if>
+					<not>
+						<equals arg1="${build.option}" arg2="debug"/>
+						<!-- Handles both release and protected cases-->
+					</not>
+						<then>
+							<if>
+								<equals arg1="${build.option}" arg2="release"/>
+								<then>
+									<antcall target="encrypt-zip-files"/>
+								</then>
+								<else>
+									<antcall target="java-encrypt-zip-files"/>
+								</else>
+							</if>				
+							<replace file="${app.dir}/src/${packagepath}/${appid}.java" token="$APP_SOURCE_LOC" value="2" />
+						</then>
+						<else>
+							<replace file="${app.dir}/src/${packagepath}/${appid}.java" token="$APP_SOURCE_LOC" value="1" />
+						</else>
+				</if>
+			</then>
+			<else>
+				<replace file="${app.dir}/src/${packagepath}/${appid}.java" token="$APP_SOURCE_LOC" value="1" />
+			</else>
+		</if>
+		<!-- Create secure source for PAAS license file -->
+		<antcall target="copy-PaaS-resources"/>
+		<!-- Create secure source for VideoWidget file -->	
+		<if> 
+			<equals arg1="${usesvideo}" arg2="true"/> 
+			<then>
+				<antcall target="copy-VideoWidget-resources"/>
+			</then>
+		</if>		
+		
+	</target>
+
+	<target name="copy-webassets">
+		<echo>Copying the web assets from ${project.loc}</echo>
+		<mkdir dir="${assets.dir}/web"/>
+		<available file="${project.loc}/web/localfiles" type="dir" property="webapp.present"/>
+		<if>
+			<equals arg1="${webapp.present}" arg2="true"/>
+			<then>
+				<copy todir="${assets.dir}/web/localfiles" overwrite="true">
+					<fileset dir="${project.loc}/web/localfiles" includes="**/*.*"/>
+				</copy>
+			</then>
+		</if>
+	</target>
+
+	<target name="gen-ffi-loading">
+		<if>
+			<equals arg1="${platform.lib.metrics.thirdparty}" arg2="crittercism"/>
+			<then>
+				<if>
+					<equals arg1="${default.dir.present}" arg2="true"/>
+					<then>
+						<concat fixlastline="yes" overwrite="true" destfile="${minification.dir}/default/konyinternalffiloader.js">
+							kony.os.loadLibrary({"javaclassname": "com.kony.apm.crittercism.KonyCrittercismLib"});
+						</concat>					
+					</then>
+					<else>
+						<concat fixlastline="yes" overwrite="true" destfile="${minification.dir}/nongenerated/konyinternalffiloader.js">
+							kony.os.loadLibrary({"javaclassname": "com.kony.apm.crittercism.KonyCrittercismLib"});
+						</concat>					
+					</else>
+				</if>	
+			</then>
+		</if>
+	</target>
+	
+	<target name="gen-zip-files">
+		<available file="${appfolder}/${outputdir}/functionalmodules/${functional.module.xml.file}" property="hasFuncModules"/>
+		<if>
+			<equals arg1="${hasFuncModules}" arg2="true"/>
+			<then>
+				<antcall target="gen-module-zip-files"/>
+			</then>
+			<else>
+				<antcall target="gen-js-zip-files"/>
+			</else>
+		</if>
+	</target>
+	<target name="zip-workerthreads">
+
+		<if>
+			<equals arg1="${mvc.workerthreads.dir.present}" arg2="true"/>
+			<then>
+				<zip destfile="${assets.dir}/js/workerthreads.kfm">
+					<zipfileset dir="${minification.dir}/workerthreads" includes="*.js"/>
+				</zip>
+			</then>
+		</if>	
+		
+		<available file="${minification.dir}/nongenerated/workerthreads" type="dir" property="workerthreads.dir.present"/>
+		<if>
+			<equals arg1="${workerthreads.dir.present}" arg2="true"/>
+			<then>
+				<zip destfile="${assets.dir}/js/workerthreads.kfm">
+					<zipfileset dir="${minification.dir}/nongenerated/workerthreads" includes="*.js"/>
+				</zip>
+			</then>
+		</if>	
+	</target>
+	
+	<target name="zip-common-jslibs">
+
+		<zip destfile="${assets.dir}/js/common-jslibs.kfm">
+		<zipfileset dir="extres" includes="require.js,konymvc_sdk.js"/>		
+		</zip>
+		<if>
+			<equals arg1="${default.dir.present}" arg2="true" />
+			<then>				
+				<zip destfile="${assets.dir}/js/common-jslibs.kfm"
+					basedir="${minification.dir}/default" includes="konylibrary.js" update="true"/>				
+			</then>	
+			<else>				
+				<zip destfile="${assets.dir}/js/common-jslibs.kfm"
+					basedir="${minification.dir}/nongenerated" includes="konylibrary.js" update="true"/>
+			</else>
+		</if>
+		<if>
+			<equals arg1="${enableawssdk}" arg2="true" />
+			<then>
+				<echo message="adding awssdk to zip"/>
+				<zip destfile="${assets.dir}/js/common-jslibs.kfm"
+					basedir="${minification.dir}/awssdk" includes="*.js" update="true"
+				/>
+			</then>						
+		</if>
+	</target>
+	
+	<target name="gen-module-zip-files">
+		<taskdef name="FunctionalModulesXmlParser" classname="com.konylabs.android.anttask.FunctionalModuleXMLParser">
+			<classpath>
+				<pathelement location="extres/FunctionalModuleXmlParser.jar"/>
+			</classpath>
+		</taskdef>
+
+		<taskdef name="OrderedZip" classname="OrderedZip">
+			<classpath>
+				<pathelement location="extres/OrderedZip.jar"/>
+			</classpath>
+		</taskdef>
+
+		<copy todir="${assets.dir}" file="${appfolder}/${outputdir}/functionalmodules/${functional.module.xml.file}"/>
+		<delete dir="${functionalmodules.dir}"/>
+		<mkdir dir="${functionalmodules.dir}"/>
+		<FunctionalModulesXmlParser xmlFile="${assets.dir}/${functional.module.xml.file}" 
+			schemaFile="${basedir}/extres/functionalModules.xsd"
+			destFile="${functionalmodules.dir}/functionalModules.properties"/>
+			
+		<property file="${functionalmodules.dir}/functionalModules.properties"/>
+		
+		<echo message="Modules: ${fm.moduleslist}"/>
+		<copy todir="${functionalmodules.dir}">
+			<fileset dir="${minification.dir}" includes="**/*.js"/>
+		</copy>
+		<for list="${fm.moduleslist}" param="module">
+			<sequential>
+				<if>
+					<not>
+						<isset property="fm.@{module}.jsModules"/>
+					</not>
+					<then>
+						<property name="fm.@{module}.jsModules" value=""/>
+					</then>
+				</if>
+				<if>
+					<not>
+						<isset property="fm.@{module}.views"/>
+					</not>
+					<then>
+						<property name="fm.@{module}.views" value=""/>
+					</then>
+				</if>
+				<echo message="zipping ${fm.@{module}.jsModules},${fm.@{module}.views}"/>
+				<OrderedZip destfile="${assets.dir}/js/@{module}.kfm"
+							basedir="${functionalmodules.dir}"
+							includes="${fm.@{module}.jsModules},${fm.@{module}.views}"
+							flatten="true"
+							ignoreIfNotFound="true"/>
+				
+			</sequential>	
+		</for>
+	</target>
+	
+	<target name="gen-js-zip-files">
+		<zip destfile="${assets.dir}/js/startup.js">
+			<zipfileset dir="${minification.dir}/startup" includes="*.js"/>			
+		</zip>
+		<if>
+			<equals arg1="${default.dir.present}" arg2="true" />
+			<then>				
+				<zip destfile="${assets.dir}/js/startup.js"
+					basedir="${minification.dir}/default" includes="*.js" excludes="konylibrary.js" update="true"/>	
+			</then>
+		</if>			
+		<if>
+			<equals arg1="${nongenerated.dir.present}" arg2="true" />
+			<then>				
+				<zip destfile="${assets.dir}/js/startup.js"
+					basedir="${minification.dir}/nongenerated" includes="*.js" excludes="konylibrary.js,require.js" update="true"/>	
+			</then>
+		</if>
+		<if>
+			<equals arg1="${generated.dir.present}" arg2="true" />
+			<then>				
+				<zip destfile="${assets.dir}/js/startup.js"
+					basedir="${minification.dir}/generated" includes="*.js" update="true"/>					
+			</then>
+		</if>	
+		<if>
+			<equals arg1="${require.dir.present}" arg2="true" />
+			<then>
+				<zip destfile="${assets.dir}/js/require.kam">
+					<zipfileset dir="${minification.dir}/require" includes="**/*.*"/>
+				</zip>
+			</then>
+		</if>				
+		<condition property="isBiggerCode">
+			<length file="${assets.dir}/js/startup.js" when="gt" length="1036288" />
+		</condition>
+		<if>
+			<equals arg1="${isBiggerCode}" arg2="true" />
+			<then>
+				<move file="${assets.dir}/js/startup.js" tofile="${assets.dir}/js/startup.js.mp3" overwrite="true"/>
+			</then>
+		</if>
+	</target>
+	
+	<property name="keys.dir" value="${resfolder}/keys/"/>
+	
+	<target name="java-encrypt-zip-files">
+       <if>
+			<not>
+				<available file="${keys.dir}/private_key.pem" />
+			</not>
+        	<then>
+				 <fail message="private_key.pem missing in ${keys.dir}"/>
+        	</then>
+        </if>
+		<if>
+			<not>
+				<available file="${keys.dir}/public_key.dat" />
+			</not>
+        	<then>
+        		<fail message="public_key.dat missing in ${keys.dir}"/>
+        	</then>
+        </if>
+        <java jar="${app.dir}/../../extres/kony_loadfile.jar" fork="true"  failonerror="true">
+			<arg line="${keys.dir}"/>
+			<arg line="${assets.dir}"/>
+			<arg line="${appid}"/>
+        </java>
+	</target>	
+	<target name="encrypt-zip-files">
+		<for param="module">
+			<path>
+				<fileset dir="${assets.dir}/js" includes="*.kfm,*.js,*.mp3,*.kam"/>
+			</path>
+			<sequential>
+				<echo message="Encrypting @{module} ..."/>
+				<if>
+					<equals arg1="${os.family}" arg2="windows"/> 
+					<then> 
+						<exec-shell executable="cmd" failonerror="true" failifexecutionfails="true" >
+							<arg line='/c "${app.dir}/../../extres/kony_loadfile.exe @{module} ${assets.dir}/js/temp.kfm" ${appid} ${packagename} ${currenttime}'/>
+						</exec-shell>
+					</then> 
+					<else> 
+						<exec-shell executable="cmd" failonerror="true" failifexecutionfails="true" >
+							<arg line='/c "chmod 774 ${app.dir}/../../extres/kony_loadfile"'/>
+						</exec-shell>
+						<exec-shell executable="cmd" failonerror="true" failifexecutionfails="true" >
+							<arg line='/c "${app.dir}/../../extres/kony_loadfile @{module} ${assets.dir}/js/temp.kfm ${appid} ${packagename} ${currenttime}"'/>
+						</exec-shell>
+
+					</else>
+				</if>
+				<move file="${assets.dir}/js/temp.kfm" tofile="@{module}" overwrite="true"/>
+			</sequential>
+		</for>
+	</target>
+	
+	<target name="copy-PaaS-resources">
+		<delete dir="${app.dir}/src/com/konylabs/js/appsrc"/>
+		<available file="extres/paas/license.js" type="file" property="extres.paas.license"/>
+		<if>
+    		<equals arg1="${extres.paas.license}" arg2="true"/>
+    		<then>
+				<loadfile property="appsrc" srcFile="extres/paas/license.js"/>
+				<!-- Check if file is empty -->
+				<if>
+					<equals arg1="${appsrc}" arg2="$${appsrc}"/>
+					<then>
+						<property name="escjssrc" value=""/>
+					</then>
+					<else>
+						<escapejssource property="escjssrc" appSource="${appsrc}" />
+					</else>
+				</if>
+				<mkdir dir="${app.dir}/src/com/konylabs/js/appsrc" />
+				<copy file="extres/JSSourceFileTemplate.java" tofile="${app.dir}/src/com/konylabs/js/appsrc/PaaSLicenseSource.java" overwrite="true" />
+				<replace file="${app.dir}/src/com/konylabs/js/appsrc/PaaSLicenseSource.java" token="$SourceFileName" value="PaaSLicenseSource"/>
+				<replace file="${app.dir}/src/com/konylabs/js/appsrc/PaaSLicenseSource.java" token="$JSSource" value="${escjssrc}"/>
+			</then>
+		</if>
+	</target>
+	
+	<target name="copy-VideoWidget-resources">
+		<available file="extres/konyVideoWidget.js" type="file" property="extres.videowidget"/>
+		<if>
+    		<equals arg1="${extres.videowidget}" arg2="true"/>
+    		<then>
+				<loadfile property="videowidgetsrc" srcFile="extres/konyVideoWidget.js"/>
+				<!-- Check if file is empty -->
+				<if>
+					<equals arg1="${videowidgetsrc}" arg2="$${videowidgetsrc}"/>
+					<then>
+						<property name="escvideowidgetsrc" value=""/>
+					</then>
+					<else>
+						<escapejssource property="escvideowidgetsrc" appSource="${videowidgetsrc}" />
+					</else>
+				</if>
+				<mkdir dir="${app.dir}/src/com/konylabs/js/appsrc" />				
+				<copy file="extres/JSSourceFileTemplate.java" tofile="${app.dir}/src/com/konylabs/js/appsrc/KonyVideoWidget.java" overwrite="true" />
+				<replace file="${app.dir}/src/com/konylabs/js/appsrc/KonyVideoWidget.java" token="$SourceFileName" value="KonyVideoWidget"/>
+				<replace file="${app.dir}/src/com/konylabs/js/appsrc/KonyVideoWidget.java" token="$JSSource" value="${escvideowidgetsrc}"/>
+			</then>
+		</if>
+	</target>	
+	
+</project>

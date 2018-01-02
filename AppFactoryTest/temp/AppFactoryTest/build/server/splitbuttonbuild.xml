@@ -1,0 +1,20 @@
+<?xml version="1.0"?>
+<project name="Kony web project" default="all" basedir=".">
+	<target name="init">
+		<property name="dirs.base" value="${basedir}"/>
+		<property name="build.images" location="iphoneimages"/>
+	</target>
+	
+	<target name="create" >
+		<exec executable="${basedir}/splitbutton.bat" failonerror="true" failifexecutionfails="true">
+			<env key="PATH" path="${env.PATH};${imagemagick}"/>
+			<arg line="${build.images}"/>
+			<arg line="${img.name}"/>
+			<arg line="${img.backcolor}"/>
+			<arg line="${img.bordercolor}"/>
+		</exec>
+	</target>
+
+	<!-- Main target  -->
+	<target name="all" depends="init,create"/>
+</project>

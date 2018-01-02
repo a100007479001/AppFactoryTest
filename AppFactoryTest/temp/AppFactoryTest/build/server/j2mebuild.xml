@@ -1,0 +1,204 @@
+<!--@Note: This is read only file and not being used at runtime,if we want to update anything do it in zip file \trunk\guieditor\lib\build.zip --> 
+<project name="Kony" basedir="." default="build">
+   
+	<target name="build">
+		<unset name="logo"/>
+		<var name="logo" value="${logo_j2me}"/>
+		<unset name="splash.image"/>
+		<var name="splash.image" value="${splash.image_j2me}"/>
+    	
+    	
+		<if>
+			<not>
+			<equals arg1="${j2me.hybridmode}" arg2="wrapper"/>
+			</not>
+			<then>
+		    	<delete dir="lua" failonerror="false"/>
+		    	<mkdir dir="lua"/>
+		   	 	<copy todir="lua" overwrite="true">
+		   	    	<fileset dir="../../output/lua" excludes="startup.lua,tcchannel.lua,rcchannel.lua" casesensitive="false"/>
+		    	</copy>
+				<available file="../../output/lua/j2me" type="dir" property="j2melua.present"/>
+				<if>
+					<equals arg1="${j2melua.present}" arg2="true" />
+				<then>
+					<copy todir="lua" overwrite="true">
+			     		<fileset dir="../../output/lua/j2me" excludes="startup.lua,tcchannel.lua,rcchannel.lua" casesensitive="false"/>
+		    		</copy>
+				</then>
+				</if>
+			</then>
+		</if>
+
+      	<delete dir="j2me"/>
+   		<mkdir dir="j2me"/>
+   		<mkdir dir="j2me/resources"/>
+		<mkdir dir="j2me/temp"/>
+   		<mkdir dir="scripts"/>
+       		
+   		<delete dir ="resources"/>
+   		<mkdir dir="resources"/>
+	
+  		<copy todir="resources" overwrite="true">
+			<fileset dir="${resfolder}/common"/>
+			<fileset dir="${resfolder}/mobile/common" includes="*.*,${reslocale.str}"/>
+		<fileset dir="${i18n.properties}" includes="**/*.prop" casesensitive="false"/>   			
+  			
+  		</copy>
+    	
+        <available file="${fonts_workspace}/J2me" type="dir" property="j2me.workspacefonts.present" /> 
+        <if>
+            <equals arg1="${j2me.workspacefonts.present}" arg2="true" /> 
+            <then>
+                <copy todir="resources" overwrite="true">
+                    <fileset dir="${fonts_workspace}/J2me" includes="*.ttf"/>
+                </copy>
+            </then>
+        </if>
+    	   
+   		<copy todir="resources" overwrite="true">
+   			<fileset dir="${resfolder}/mobile/native/j2me"/>
+   		</copy>
+    	
+        <available file="${resfolder}/fonts/J2me" type="dir" property="j2me.fonts.present" /> 
+        <if>
+            <equals arg1="${j2me.fonts.present}" arg2="true" /> 
+            <then>
+                <copy todir="resources" overwrite="true">
+                    <fileset dir="${resfolder}/fonts/J2me" includes="*.ttf"/>
+                </copy>
+            </then>
+        </if>
+
+		<available file="${resfolder}/lib/j2me" type="dir" property="lib.present"/>
+
+   		<if>
+			<equals arg1="${lib.present}" arg2="true" />
+			<then>
+				<copy todir="resources">
+					<fileset dir="${resfolder}/lib" includes="**/*.*"/>
+				</copy>			
+			</then>
+		</if>
+    	
+		<if>
+			<equals arg1="${j2me.hybridmode}" arg2="wrapper"/>
+			<then>
+				<exec executable="cmd.exe" failonerror="true" failifexecutionfails="true">
+					<env key="PATH" path="${env.PATH};${appfolder}/build/luacompiler"/>
+					<arg line='/c "luac${luaprefix} -o ${luac.file}${_debugluafile} static_home.lua"'/>
+				</exec>
+			</then>
+			<else>
+				<createAndCopyToLuasrc dir.name="j2me" m4constant.name="m4j2me"/>
+		   					
+		   		<exec executable="cmd.exe" failonerror="true" failifexecutionfails="true">
+		   			<env key="PATH" path="${env.PATH};${appfolder}/build/luacompiler"/>
+		   			<arg line='/c "luac${luaprefix} -o ${luac.file}${_debugluafile} ${project.loc}\luasrc\j2me\startup\rcchannel.lua ${project.loc}\luasrc\j2me\nongenerated\*.lua ${project.loc}\luasrc\j2me\generated\*.lua ${project.loc}\luasrc\j2me\startup\startup.lua"'/>
+		   		</exec>
+				
+		   		<!-- Create a LUA byte code version with line number info -->
+		   		
+		   		<exec executable="cmd.exe" failonerror="true" failifexecutionfails="true">
+		   			<env key="PATH" path="${env.PATH};${appfolder}/build/luacompiler"/>
+		   			<arg line='/c "luac${luaprefix} -o ${luac.file}.debug${_debugluafile} ${project.loc}\luasrc\j2me\startup\rcchannel.lua ${project.loc}\luasrc\j2me\nongenerated\*.lua ${project.loc}\luasrc\j2me\generated\*.lua ${project.loc}\luasrc\j2me\startup\startup.lua"'/>
+		   		</exec>
+			</else>
+		</if>
+    	
+   		<copy todir="j2me/resources" overwrite="true">
+   			<fileset dir="${basedir}/resources" casesensitive="false"/>
+   		</copy>
+    	 
+   		<copy todir="j2me/resources" overwrite="true">
+   			<fileset dir="${basedir}/resources" includes="**/small/*.png" casesensitive="false"/>
+   		</copy>
+   
+   		<concat fixlastline="yes" destfile="resources.properties">
+   		platform.version=${platform.version}
+   		app.name=${appname}
+   		app.version=${appversion}
+   		vendor.name=${vendorname}
+   		entrypoint=konyapp.o
+   		appid=${appid}
+   		logo.id=${logo}
+   		resources=${resources.list}konyapp.o
+   		konyapp.o.id=konyapp.o
+   		konyapp.o.type=1
+   		resfolder=${basedir}/resources
+   		locales=${locales}</concat>
+   		
+   		<replaceregexp file="resources.properties" match="\\" replace="/" flags="g" />
+   	
+   
+   		<copy todir="j2me/resources" overwrite="true">
+   			<fileset dir="${basedir}/resources" includes="konyapp.o" casesensitive="false"/>
+			<fileset dir="${basedir}/resources" includes="konyapp.o.debug" casesensitive="false"/>   			
+   			<fileset dir="${basedir}/resources" includes="*.ttf" casesensitive="false"/>
+   			<fileset dir="${basedir}/resources" includes="**/large/*.png" casesensitive="false"/>
+   		</copy>
+   	
+		<if>
+			<equals arg1="${lib.present}" arg2="true" />
+			<then>
+				<mkdir dir="j2me/lib"/>
+				<copy todir="j2me/lib">
+					<fileset dir="${basedir}/resources/j2me" includes="**/*.*" casesensitive="false"/>
+				</copy>			
+			</then>
+		</if>
+
+   		<!-- exec executable="${basedir}/kappgen.bat" failonerror="true" failifexecutionfails="true">
+   			 <arg value='${kpgenpath}'/>
+   			 <arg value='${log4jpath}'/>
+   			 <arg value="${basedir}/"/>
+   			 <arg value="resources"/>
+   	    </exec>
+   	
+   		<copy file="konyapp.kbf" tofile="kbf/konyapp.kbf" overwrite="true" /> 
+    	<delete file ="konyapp.kbf"/ -->
+    	
+		<copy todir="j2me/resources" overwrite="true">
+   			<fileset dir="${i18n.properties}" includes="**/*.prop" casesensitive="false"/>			
+			<fileset dir="${basedir}/resources" includes="**/storm/*.png" casesensitive="false"/>
+		</copy>
+
+		<!-- have debug version in place as well -->
+   		<copy file="${luac.file}.debug" tofile="resources/konyapp.o" overwrite="true"/>
+		
+   		<!-- exec executable="${basedir}/kappgen.bat" failonerror="true" failifexecutionfails="true">
+   			 <arg value='${kpgenpath}'/>
+   			 <arg value='${log4jpath}'/>
+   			 <arg value="${basedir}/"/>
+   			 <arg value="resources"/>
+   	    	</exec>
+
+   		<copy file="konyapp.kbf" tofile="kbf/konyapp-debug.kbf" overwrite="true" / -->    	    	
+    	<!-- Copying 3rd party libs for J2me -->
+    	<available file="${j2me.libs.folder}" type="dir" property="j2me.customlibs.available"/>
+		<available file="${j2me.templates.folder}" type="dir" property="j2me.templates.available"/>
+		<echo message="${j2me.customlibs.available}  ${j2me.templates.available}"/>
+		<if>
+			<and>
+				<equals arg1="${j2me.customlibs.available}" arg2="true"/>
+				<equals arg1="${j2me.templates.available}" arg2="true"/>
+			</and>
+			<then>
+				<mkdir dir="j2me/lib"/>
+				<mkdir dir="j2me/src"/>
+				<echo message="Copying third party libs and generated templates"/>
+				<copy todir="j2me/lib"> 
+					<fileset dir="${j2me.libs.folder}" includes="*.jar"></fileset>	
+				</copy>
+				<copy todir="j2me/src"> 
+					<fileset dir="${customlibs.src.dir}/j2me" includes="**/*.*"></fileset>
+				</copy>
+			</then>
+			<else>
+				<echo message="No custom libraries"/>
+			</else>
+		</if>
+    	<!-- Done : Copying 3rd party libs for J2me -->
+   		<delete file ="${luac.file}"/>
+	</target>
+</project>

@@ -1,0 +1,100 @@
+<!--@Note: This is read only file and not being used at runtime,if we want to update anything do it in zip file \trunk\guieditor\lib\build.zip -->
+<project name="Kony" basedir=".">
+
+	<target name="init">
+
+
+		<property name ="jssrcplatform.loc" location="${project.loc}/jssrc/${fpplatname}" />
+
+		<condition property="outputdir" value="output" else="jsoutput">
+			<equals arg1="lua" arg2="${dev.language}" casesensitive="false" trim="true"/>
+		</condition>
+
+		<echo message="${fpapp}" />
+		<condition property="outputdir" value="output" else="jsoutput">
+			<equals arg1="lua" arg2="${dev.language}" casesensitive="false" trim="true"/>
+		</condition>
+		<echo>plugin location is ***** ${plugin.loc} ******</echo>
+		<taskdef name="unset" classname="ise.antelope.tasks.Unset">
+			<classpath>
+				<pathelement location="${plugin.loc}\lib\AntelopeTasks_3.4.0.jar"/>
+			</classpath>
+		</taskdef>
+		<taskdef resource="net/sf/antcontrib/antcontrib.properties">
+			<classpath>
+				<pathelement location="${plugin.loc}/lib/ant-contrib-0.6.jar"/>
+			</classpath>
+		</taskdef>
+
+	</target>
+
+
+	<target name="updatexap" depends="init">
+
+		<zip destfile="${jetty_fppath}/src.zip" basedir="${jssrcplatform.loc}/generated"
+		includes="*.js" update="true">
+		</zip>
+		<zip destfile="${jetty_fppath}/src.zip" basedir="${jssrcplatform.loc}/nongenerated"
+		includes="*.js" update="true">
+		</zip>
+		<zip destfile="${jetty_fppath}/src.zip" basedir="${jssrcplatform.loc}/startup"
+		includes="*.js" update="true">
+		</zip>
+
+		<available file="${jssrcplatform.loc}/nongenerated/workerthreads" type="dir" property="workers.available" />
+		<if>
+			<equals arg1="${workers.available}" arg2="true" />
+			<then>
+				<if>
+					<equals arg1="${isMVC}" arg2="true" />
+					<then>
+						<zip destfile="${jetty_fppath}/src.zip" basedir="${jssrcplatform.loc}/workerthreads" update="true" includes="workerthreads/**">
+						</zip>
+					</then>
+					<else>
+						<zip destfile="${jetty_fppath}/src.zip" basedir="${jssrcplatform.loc}/nongenerated/workerthreads" update="true" includes="workerthreads/**">
+						</zip>
+					</else>
+				</if>
+			</then>
+		</if>
+
+		<available file="../../${outputdir}/functionalmodules/functionalModules.xml" type="file" property="functionalModules.xml.available" />
+
+		<if>
+			<equals arg1="${functionalModules.xml.available}" arg2="true" />
+			<then>
+				<zip destfile="${jetty_fppath}/src.zip" update="true">
+					<fileset dir="../../${outputdir}/functionalmodules"
+					includes="functionalModules.xml" />
+				</zip>
+			</then>
+		</if>
+
+		<zip destfile="${jetty_fppath}/images.zip" basedir="${fpplatname}/resources" update="true" includes="*.png,*.jpg">
+		</zip>
+
+		<zip destfile="${jetty_fppath}/raw.zip" basedir="${fpplatname}/resources/raw" update="true"  >
+		</zip>
+		<zip destfile="${jetty_fppath}/themes.zip" basedir="../../${outputdir}/js/themes/${fpplatname}" update="true">
+		</zip>
+
+		<zip destfile="${jetty_fppath}/themes.zip" basedir="${fpplatname}/resources"
+			includes="themeslist.txt" update="true">
+		</zip>
+
+
+		<zip destfile="${jetty_fppath}/i18n.zip" basedir="${fpplatname}/resources" update="true" includes="*.xml,i18n.txt">
+		</zip>
+
+
+		<echo message="metainfo.....${metainfo}" />
+
+		<echo file = "${jetty_fppath}/metafile.info">${metainfo}</echo>
+
+		<zip destfile="${jetty_fppath}/fonts.zip" basedir="${fpplatname}/resources" update="true" includes="*.ttf">
+		</zip>
+
+	</target>
+</project>
+

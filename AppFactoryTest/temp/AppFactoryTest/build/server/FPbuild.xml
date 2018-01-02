@@ -1,0 +1,323 @@
+<!--@Note: This is read only file and not being used at runtime,if we want to update anything do it in zip file \trunk\guieditor\lib\build.zip -->
+<project name="Kony" basedir=".">
+
+	<target name="updateFpKAR" depends="init,fpFFI,fpIphoneAppProps,fpIpadAppProps,fPIphoneCustomWidgets">
+		<echo message="Updating Functional Preview KAR" />
+		<zip destfile="${fp_app}" update="true">
+			<fileset dir = "${fp_app_previous}/fp_temp" includes="**"/>
+			<!--fileset dir = "${kbf_key}" includes="*.zip"/-->
+			<!--fileset dir = "${kbf_key}" includes="js_*.xml"/-->
+			<!--fileset dir = "${kbf_key}/resources" includes="*.ttf" /-->
+			<!--fileset dir = "${jetty_fppath}" includes="application.properties"/-->
+			<!--fileset dir = "${jetty_fppath}" includes="Settings.properties.xml"/-->
+		</zip>
+	</target>
+
+	<target name="updateFpKARReset" depends="init,fpIphoneAppProps,fpIpadAppProps">
+		<echo message="Updating Functional Preview KAR" />
+		<zip destfile="${fp_app}" update="true">
+			<fileset dir = "${fp_app_previous}/fp_temp" includes="**"/>
+			<!--fileset dir = "${kbf_key}" includes="*.zip"/-->
+			<!--fileset dir = "${kbf_key}" includes="js_*.xml"/-->
+			<!--fileset dir = "${kbf_key}/resources" includes="*.ttf" /-->
+			<!--fileset dir = "${jetty_fppath}" includes="application.properties"/-->
+			<!--fileset dir = "${jetty_fppath}" includes="Settings.properties.xml"/-->
+		</zip>
+	</target>
+
+	<target name="init">
+		<property name="channel" value="${channel}"/>
+		<property name="channel.folder" value="${channel.folder}"/>
+		<property name="ffi.xml.dir" value="${customlibs.dir}/../xml"/>
+		<property name="js.ffi.xml.dir" value="${customlibs.dir}/../jsXml"/>
+		<property name="libs.folder" value="${customlibs.dir}/${channel}"/>
+		<property name="iphone.templates.folder" value="${customlibs.src.dir}/${channel}"/>
+		<property name="fp_app" location="${fp_app}"/>
+		<property name="fp_app_previous" location="${fp_app}/../"/>
+		<echo message="${fpapp}" />
+		<condition property="outputdir" value="output" else="jsoutput">
+			<equals arg1="lua" arg2="${dev.language}" casesensitive="false" trim="true"/>
+		</condition>
+		<echo>plugin location is ***** ${plugin.loc} ******</echo>
+		<taskdef name="unset" classname="ise.antelope.tasks.Unset">
+			<classpath>
+				<pathelement location="${plugin.loc}\lib\AntelopeTasks_3.4.0.jar"/>
+			</classpath>
+		</taskdef>
+		<taskdef resource="net/sf/antcontrib/antcontrib.properties">
+			<classpath>
+				<pathelement location="${plugin.loc}/lib/ant-contrib-0.6.jar"/>
+			</classpath>
+		</taskdef>
+
+		<available file="${fp_app_previous}/fp_temp" type="dir" property="fp.temp.available" />
+		<if>
+			<equals arg1="${fp.temp.available}" arg2="true" />
+			<then>
+				<delete dir="${fp_app_previous}/fp_temp" />
+			</then>
+		</if>
+
+	</target>
+
+	<target name="fpIphoneAppProps">
+		<if>
+			<equals arg1="${channel}" arg2="iphone" />
+			<then>
+				<concat fixlastline="yes" destfile="resources.properties">
+	    platform.version=${platform.version}
+	    app.name=${appname}
+	    app.version=${appversion}
+	    vendor.name=${vendorname}
+	    entrypoint=konyapp.o
+	    appid=${appid}
+	    logo.id=${logo}
+	    splash.image=${splash.image}
+	    splash.video=${splash.video}
+	    splash.video.interruptable=${splash.video.interruptable}
+	    splash.animation.duration=${splash.animation.duration}
+	    splash.animation.images=${splash.animation.images}
+	    splash.loading.indicator=${splash.iphone.li}
+	    bundle.identifier=${bundle.identifier}
+	    bundle.version=${bundle.version}
+	    app.icon.glossyeffect=${app.icon.glossyeffect}
+	    konyapp.o.id=konyapp.o
+	    konyapp.o.type=1
+	    resfolder=${basedir}/resources
+	    platform.lib.charts=${enableCharts2D3DiPhoneiPad}
+	    platform.lib.metrics.thirdparty=${enableMetricsiPhoneiPad}
+	    watchenabled=${watchenabled}
+	    usesvideo=true
+	    enableMobileFirstAPIs=${enablejsbindings}
+	    locales=${iphonelocales}
+	    enableCordova=${enableCordova}
+	    cordovaglobal=${cordovaglobal}
+	    cordovaversion=${cordovaversion}</concat>
+
+				<replaceregexp file="resources.properties" match="\\" replace="/" flags="g" />
+				<echo message="${fp_app}/../"/>
+				<copy file="resources.properties" tofile="${fp_app_previous}/fp_temp/application.properties" overwrite="true" />
+				<!--zip destfile="${fp_app}" update="true">
+                                                                <fileset dir ="${fp_app_previous}" includes="application.properties"/>
+                                                                </zip-->
+			</then>
+		</if>
+	</target>
+
+	<target name="fpIpadAppProps">
+		<if>
+			<equals arg1="${channel}" arg2="ipad"/>
+			<then>
+				<concat fixlastline="yes" destfile="resources.properties">
+                platform.version=${platform.version}
+                app.name=${appname}
+                app.version=${appversion}
+                vendor.name=${vendorname}
+                entrypoint=konyapp.o
+                appid=${appid}
+                app.launch.mode=${app.launch.mode}
+                logo.id=${logo}
+                splash.image=${splash.image}
+                splash.video=${splash.video}
+                splash.video.interruptable=${splash.video.interruptable}
+                splash.animation.duration=${splash.animation.duration}
+                splash.animation.images=${splash.animation.images}
+                splash.image.landscape=${splash.image.landscape_ipad}
+                splash.video.landscape=${splash.video.landscape_ipad}
+                splash.video.interruptable.landscape=${splash.video.interruptable.landscape}
+                splash.animation.duration.landscape=${splash.animation.duration.landscape}
+                splash.animation.images.landscape=${splash.animation.images.landscape}
+                splash.loading.indicator=${splash.iphone.li}
+                bundle.identifier=${bundle.identifier}
+                bundle.version=${bundle.version}
+                app.icon.glossyeffect=${app.icon.glossyeffect}
+                app.supportedorientations=${app.supportedorientations}
+                konyapp.o.id=konyapp.o
+                konyapp.o.type=2
+                resfolder=${basedir}/resources
+                platform.lib.charts=${enableCharts2D3DiPhoneiPad}
+                platform.lib.metrics.thirdparty=${enableMetricsiPhoneiPad}
+                watchenabled=${watchenabled}
+                usesvideo=true
+                enableMobileFirstAPIs=${enablejsbindings}
+                locales=${iphonelocales}
+                enableCordova=${enableCordova}
+                cordovaglobal=${cordovaglobal}
+                cordovaversion=${cordovaversion}</concat>
+
+				<replaceregexp file="resources.properties" match="\\" replace="/" flags="g" />
+				<echo message="${fp_app}/../"/>
+				<copy file="resources.properties" tofile="${fp_app_previous}/fp_temp/application.properties" overwrite="true" />
+				<!--zip destfile="${fp_app}" update="true">
+                                                                <fileset dir ="${fp_app_previous}" includes="application.properties"/>
+                                                                </zip-->
+			</then>
+		</if>
+	</target>
+
+	<target name="fPIphoneCustomWidgets">
+		<echo message=" custom widgets for ${channel}" />
+		<if>
+			<equals arg1="${dev.language}" arg2="js"/>
+			<then>
+				<available file="${customwidgets.dir}/${channel}" type="dir" property="js.libs.available" />
+				<if>
+					<equals arg1="${js.libs.available}" arg2="true"/>
+					<then>
+						<copy todir="${fp_app_previous}/fp_temp/customwidgets">
+							<fileset dir="${customwidgets.dir}/${channel}" includes="*.*"/>
+						</copy>
+
+						<!--zip destfile="${fp_app_previous}/{fp_temp}/customwidgets" update="true">
+                                                                                                                <fileset dir="${customwidgets.dir}/${channel}" includes="*.*"/>
+                                                                                                </zip-->
+
+					</then>
+				</if>
+				<available file="${ios.customwidgets.xml.dir}" type="dir" property="js.xml.available" />
+				<echo message=" js custom widget xml file available is  ${js.xml.available}" />
+				<if>
+					<equals arg1="${js.xml.available}" arg2="true"/>
+					<then>
+						<copy todir="${fp_app_previous}/fp_temp/customwidgets">
+							<fileset dir="${ios.customwidgets.xml.dir}" includes="*.xml"/>
+							<globmapper from="*" to="cwi_*"/>
+						</copy>
+
+						<!--zip destfile="${fp_app_previous}/{fp_temp}/customwidgets" update="true">
+                                                                                                                <fileset dir="${ios.customwidgets.xml.dir}" includes="*.xml"/>
+                                                                                                </zip-->
+					</then>
+				</if>
+			</then>
+		</if>
+	</target>
+
+	<target name="fpFFI">
+		<available file="${libs.folder}" type="dir" property="libs.available" />
+		<if>
+			<equals arg1="${libs.available}" arg2="true"/>
+			<then>
+				<copy todir="${fp_app_previous}/fp_temp/">
+					<fileset dir="${libs.folder}" includes="*.*"/>
+				</copy>
+				<!--zip destfile="${fp_app}" update="true">
+                                                                                <fileset dir="${libs.folder}" includes="*.*"/>
+                                                                </zip-->
+			</then>
+		</if>
+		<available file="${ffi.xml.dir}" type="dir" property="ffi.xml.available" />
+		<if>
+			<equals arg1="${ffi.xml.available}" arg2="true"/>
+			<then>
+				<copy todir="${fp_app_previous}/fp_temp/">
+					<fileset dir="${ffi.xml.dir}" includes="*.*"/>
+					<globmapper from="*" to="lua_*"/>
+				</copy>
+				<!--zip destfile="${fp_app}" update="true">
+                                                                                <fileset dir="${ffi.xml.dir}" includes="*.*"/>
+                                                                </zip-->
+			</then>
+		</if>
+		<unset name="ffi.xml.available"/>
+		<available file="${js.ffi.xml.dir}" type="dir" property="ffi.xml.available" />
+		<if>
+			<equals arg1="${ffi.xml.available}" arg2="true"/>
+			<then>
+				<copy todir="${fp_app_previous}/fp_temp/" >
+					<fileset dir="${js.ffi.xml.dir}" includes="*.*"/>
+					<globmapper from="*" to="js_*"/>
+				</copy>
+				<!--zip destfile="${fp_app}" update="true">
+                                                                                <fileset dir="${js.ffi.xml.dir}" includes="*.*"/>
+                                                                </zip-->
+			</then>
+		</if>
+		<unset name="ffi.xml.available"/>
+	</target>
+
+	<target name="fpAppSettings">
+		<available file="../../${outputdir}/Settings.properties.xml" type="file" property="setting.properties.xml.available" />
+		<echo message="setting value  ${setting.properties.xml.available}" />
+		<if>
+			<equals arg1="${setting.properties.xml.available}" arg2="true"/>
+			<then>
+				<copy todir="${fp_app_previous}/fp_temp/">
+					<fileset dir="../../${outputdir}" includes="Settings.properties.xml"/>
+				</copy>
+				<!--zip destfile="${fp_app}" update="true">
+                                                                                <fileset dir="../../${outputdir}" includes="Settings.properties.xml"/>
+                                                                </zip-->
+			</then>
+		</if>
+	</target>
+
+	<target name="fpCustomFonts">
+		<available file="${resfolder}/fonts/iPhone" type="dir" property="iphone.fonts.present" />
+		<if>
+			<equals arg1="${iphone.fonts.present}" arg2="true" />
+			<then>
+				<copy todir="${fp_app_previous}/fp_temp/resources/" overwrite="true">
+					<fileset dir="${resfolder}/fonts/iPhone" includes="*.ttf"/>
+				</copy>
+				<!--zip destfile="${fp_app}/resources" update="true">
+                                <fileset dir="${resfolder}/fonts/iPhone" includes="*.ttf"/>
+                </zip-->
+			</then>
+		</if>
+	</target>
+
+	<target name="updateFpSRC" depends="init">
+		<echo message="Generating Source zips" />
+		<zip destfile="${jetty_fppath}/src.zip" basedir="${kbf_key}/javascript" update="true">
+		</zip>
+		<zip destfile="${jetty_fppath}/src.zip" basedir="${kbf_key}" update="true"  includes="workerthreads/**">
+		</zip>
+		<available file="../../${outputdir}/functionalmodules/functionalModules.xml" type="file" property="functionalModules.xml.available" />
+		<if>
+			<equals arg1="${functionalModules.xml.available}" arg2="true"/>
+			<then>
+				<zip destfile="${jetty_fppath}/src.zip" update="true" >
+					<fileset dir="../../${outputdir}/functionalmodules" includes="functionalModules.xml"/>
+				</zip>
+			</then>
+		</if>
+		<zip destfile="${jetty_fppath}/images.zip" basedir="${kbf_key}/resources/${channel}" update="true" includes="*.png,*.jpg" excludes="*.lproj">
+		</zip>
+		<zip destfile="${jetty_fppath}/raw.zip" basedir="${kbf_key}/resources/${channel}/raw" update="true"  >
+		</zip>
+		<available file="${kbf_key}/themes/iphone" type="dir" property="iphoneTheme.available" />
+		<if>
+			<equals arg1="${iphoneTheme.available}" arg2="true"/>
+			<then>
+				<zip destfile="${jetty_fppath}/themes.zip" basedir="${kbf_key}/themes/iphone/" update="true">
+				</zip>
+			</then>
+		</if>
+
+		<available file="${kbf_key}/themes/ipad" type="dir" property="ipadTheme.available" />
+		<if>
+			<equals arg1="${ipadTheme.available}" arg2="true"/>
+			<then>
+				<zip destfile="${jetty_fppath}/themes.zip" basedir="${kbf_key}/themes/ipad/" update="true">
+				</zip>
+			</then>
+		</if>
+
+		<zip destfile="${jetty_fppath}/i18n.zip" basedir="${kbf_key}/resources/${channel}" update="true" includes="*.lproj/*.*">
+		</zip>
+		<zip destfile="${jetty_fppath}/fonts.zip" basedir="${kbf_key}/resources/${channel}" update="true" includes="*.ttf">
+		</zip>
+		<echo file = "${jetty_fppath}/metafile.info">${metainfo}</echo>
+		<copy file="${kbf_key}/application.properties" todir="${jetty_fppath}"/>
+		<!--copy file="${kbf_key}/Settings.properties.xml" todir="${jetty_fppath}"/-->
+		<available file="${jetty_kbf}/konyapp${channel}.KAR" property="jetty.kar.present"/>
+		<if>
+			<equals arg1="${jetty.kar.present}" arg2="true"/>
+			<then>
+				<copy file="${jetty_kbf}/konyapp${channel}.KAR" todir="${kbf_key}"/>
+			</then>
+		</if>
+	</target>
+
+</project>

@@ -1,0 +1,132 @@
+<project name="Jetty-Ant integration test" basedir="." default="all">
+  
+   <target name="all">
+   <property environment="env"/>
+   <copy file="../luaj2me/midp1/lib/Preprocessor.jar" todir="${basedir}"/>
+   
+   <taskdef name="preprocess-bytecode"
+   	classname="com.konylabs.preprocessors.PreprocessorTask" classpath="Preprocessor.jar"/>	
+
+   	<property name="kpgenpath" location="${plugin.loc}/lib/kappgen.jar"/>
+   	<taskdef name="findfilestask" classname="com.konylabs.tools.task.FindFilesTask" classpath="${kpgenpath}" /> 
+      	<echo message="Generating the KBF File..."/>
+      	<property name="kbfpath" location="${basedir}"/>
+      	<property name="luac.file" location="${basedir}/resources/konyapp.o"/>
+	<property name="luac.binary" location="${appfolder}/build/luacompiler"/>
+
+        <replace file="WEB-INF/web.xml" token="actualpath" value="${kbfpath}/kbf"/>
+	<delete dir="kbf"/>
+	<mkdir dir="kbf"/>
+	<delete dir ="resources"/>
+	<mkdir dir="resources"/>
+   	<delete dir ="images"/>
+   	<mkdir dir="images"/>
+	<delete dir="lua"/>
+	<mkdir dir="lua"/>
+	
+	 <copy todir="lua" overwrite="true">
+	     <fileset dir="../../output/lua" excludes="startup.lua" casesensitive="false"/>
+ 	</copy>
+	
+<echo message="luac path: ${luac.binary}"/>
+	
+	<exec executable="/bin/bash" failonerror="true" failifexecutionfails="true">
+		  <env key="PATH" path="${env.PATH}:${luac.binary}"/>
+	      	  <arg line='-c "${luac.binary}/luac5.1 -s -o ${luac.file} ${scripts.files} ${basedir}/lua/*.lua ../../output/lua/startup.lua"'/>
+	</exec>
+        <property file="../platform.properties"/>
+	<concat fixlastline="yes" destfile="resources.properties">platform.version=${platform.version}</concat>
+	<concat fixlastline="yes" destfile="resources.properties" append="true">app.name=${appname}</concat>
+	<concat fixlastline="yes" destfile="resources.properties" append="true">app.version=${appversion}</concat>
+	<concat fixlastline="yes" destfile="resources.properties" append="true">vendor.name=${vendorname}</concat>
+	<concat fixlastline="yes" destfile="resources.properties" append="true">entrypoint=konyapp.o</concat>
+	<concat fixlastline="yes" destfile="resources.properties" append="true">appid=test</concat>
+	<concat fixlastline="yes" destfile="resources.properties" append="true">logo.id=${logo}</concat>
+	
+	<copy todir="resources">
+		<fileset dir="${basedir}/images">
+		   <include name="**/*.png"/>
+		</fileset>
+	</copy>
+
+	<copy todir="resources">
+
+		<fileset dir="${resfolder}"/>
+
+	</copy>
+
+	<findfilestask property="resources.list" extension="png" dir="${basedir}/resources"/>
+	<concat fixlastline="yes" destfile="resources.properties" append="true">resources=${resources.list}konyapp.o</concat>
+	<concat fixlastline="yes" destfile="resources.properties" append="true">konyapp.o.id=konyapp.o</concat>
+	<concat fixlastline="yes" destfile="resources.properties" append="true">konyapp.o.type=1</concat>
+	<concat fixlastline="yes" destfile="resources.properties" append="true">resfolder=${basedir}/resources</concat>
+	<replaceregexp file="resources.properties" match="\\" replace="/" flags="g" />
+	<!--copy file="../prepresources.bat" todir="${basedir}"/ -->
+	<!--copy file="../kappgen.bat" todir="${basedir}"/ -->
+	<!--copy file="../concatresources.bat" todir="${basedir}"/ -->
+	<copy file="../prepresources.sh" todir="${basedir}"/>
+	<copy file="../kappgen.sh" todir="${basedir}"/>
+	<copy file="../concatresources.sh" todir="${basedir}"/>
+
+	<exec executable="/bin/bash" failonerror="true" failifexecutionfails="true">
+		<arg line='-c "/bin/chmod +x ${basedir}/*.sh"'/>
+	</exec>
+	<exec executable="${basedir}/prepresources.sh" failonerror="true" failifexecutionfails="true">
+		<arg value='resources'/>
+		<arg value='${basedir}'/>
+	</exec>
+
+	<property name="log4jpath" location="${plugin.loc}/lib/log4j-1.2.15.jar"/>
+	<exec executable="${basedir}/kappgen.sh" failonerror="true" failifexecutionfails="true">
+		 <arg value='${kpgenpath}'/>
+		 <arg value='${log4jpath}'/>
+		 <arg value="${basedir}/"/>
+		 <arg value="resources"/>
+        </exec>
+
+	<copy file="konyapp.kbf" tofile="kbf/konyapp.kbf" overwrite="true" /> 
+	
+
+		<!-- TODO for MIDP1 -->
+		
+        <delete file="konyapp_preprocess.o"/>
+
+        <copy file="${luac.file}" tofile="konyapp_preprocess.o" overwrite="true"/>
+        <echo message="Running the pre-processor task"/>
+	<preprocess-bytecode fileIn = "konyapp_preprocess.o" fileOut = "${luac.file}"/>
+
+        <echo message="Generating MIDP1 KBF..."/>
+
+	<exec executable="${basedir}/kappgen.sh" failonerror="true" failifexecutionfails="true">
+		 <arg value='${kpgenpath}'/>
+		 <arg value='${log4jpath}'/>
+		 <arg value="${basedir}/"/>
+		 <arg value="resources"/>
+        </exec>
+
+	<copy file="konyapp.kbf" tofile="kbf/konyappmidp1.kbf" overwrite="true" /> 
+
+	<copy file="konyapp_preprocess.o" tofile="${luac.file}" overwrite="true" /> 
+	    
+	<!-- Windows Mobile -->
+	
+        <echo message="Generating WINDOWS KBF..."/>
+
+	<exec executable="${basedir}/pngtobmp.sh" failonerror="true" failifexecutionfails="true">
+	   <env key="PATH" path="${env.PATH}:${imagemagick}/bin"/>
+	   <arg line='resources'/>
+	   <arg line='${imagemagick}'/>
+	</exec>
+
+	<exec executable="${basedir}/kappgen.sh" failonerror="true" failifexecutionfails="true">
+	     <arg value="${kpgenpath}" /> 
+	     <arg value="${log4jpath}" /> 
+	     <arg value="${basedir}/" /> 
+	     <arg value="resources" /> 
+	</exec>
+	<copy file="konyapp.kbf" tofile="kbf/konyappwin.kbf" overwrite="true" /> 
+	
+
+  </target>
+
+</project>

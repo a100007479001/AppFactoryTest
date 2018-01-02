@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--Hack suggested here to avoid black patches when map is embedded in scroll view 
+and scrolled after locking screen and unlocking it over map
+http://stackoverflow.com/questions/13746351/mapfragment-in-scrollview 
+-->
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="fill_parent"
+    android:layout_height="fill_parent" >
+
+	<com.konylabs.api.ui.KonyMapV2View 
+	  android:id="@+id/mapv2view"
+	  android:layout_width="fill_parent"
+	  android:layout_height="fill_parent"
+	  />
+
+    <View 
+        android:layout_width="fill_parent"
+        android:layout_height="fill_parent" 
+        android:background="@android:color/transparent" />
+
+</RelativeLayout>

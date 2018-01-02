@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!--
+        Following values can be configured by the user ::
+            <item type="string" name="file_provider_path" >images/pictures</item>
+                above value will be file saving path inside files directory of app private space
+                do not include training or preceding "/"
+    -->
+    <item type="string" name="file_provider_path" >$FILE_PROVIDER_PATH</item>
+
+</resources>

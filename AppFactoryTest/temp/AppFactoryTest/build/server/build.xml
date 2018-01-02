@@ -1,0 +1,1060 @@
+<!--@Note: This is read only file and not being used at runtime,if we want to update anything do it in zip file \trunk\guieditor\lib\build.zip --> 
+<project name="Jetty-Ant integration test" basedir="." default="all">
+   
+	<target name="init">
+		<property name="warFile" value="${basedir}/web/${appid}r.war"/>
+		<property name="warDir" location="${basedir}/web"/>
+		<property name="kpgenpath" location="${plugin.loc}/lib/kappgen.jar"/>
+		<property name="kbfpath" location="${basedir}"/>
+	   	<property name="winm.dir" location="../luawinmobile6x"/>
+	   	<property name="luac.file" location="${basedir}/resources/konyapp.o"/>
+	  	<property name="winluac.file" location="${basedir}/resources/winkonyapp.o"/>
+		<property name="winphone8luac.file" location="${basedir}/resources/winphone8konyapp.o"/>
+		<property name="windows8luac.file" location="${basedir}/resources/windows8konyapp.o"/>
+		<property name="win6xluac.file" location="${basedir}/resources/win6xkonyapp.o"/>
+		<property name="desktop_kioskluac.file" location="${basedir}/resources/desktop_kioskkonyapp.o"/>
+	  	<property name="bbluac.file" location="${basedir}/resources/bbkonyapp.o"/>
+	  	<property name="iphoneluac.file" location="${basedir}/resources/iphonekonyapp.o"/>
+	  	<property name="ipadluac.file" location="${basedir}/resources/ipadkonyapp.o"/>
+		<property name="androidluac.file" location="${basedir}/kbf/androidkonyapp.o"/>
+		<property name="tabrcandroidluac.file" location="${basedir}/kbf/tabrcandroidkonyapp.o"/>
+		<property name="symbianluac.file" location="${basedir}/resources/symbiankonyapp.o"/>
+	   	<property name="log4jpath" location="${plugin.loc}/lib/log4j-1.2.15.jar"/>
+	   	<property file="../platform.properties"/>
+		<property name="kbf.present" value="false"/>
+		<property name="default.package" value="com/konylabs/ffi"/>
+		<property name="ffi.xml.dir" value="${customlibs.dir}/../xml"/>
+		<property name="js.ffi.xml.dir" value="${customlibs.dir}/../jsXml"/>
+		<property name="iphone.libs.folder" value="${customlibs.dir}/iphone"/>
+		<property name="iphone.templates.folder" value="${customlibs.src.dir}/iphone"/>
+		<property name="ipad.libs.folder" value="${customlibs.dir}/ipad"/>
+		<property name="ipad.templates.folder" value="${customlibs.src.dir}/ipad"/>
+		<property name="bb.libs.folder" value="${customlibs.dir}/blackberry"/>
+		<property name="bb.templates.folder" value="${customlibs.src.dir}/blackberry/${default.package}"/>
+		<property name="j2me.libs.folder" value="${customlibs.dir}/j2me"/>
+		<property name="j2me.templates.folder" value="${customlibs.src.dir}/j2me/${default.package}"/>
+		<property name="isMVC" value="${isMVC}"/>
+		
+		<property name="jetty.web" location="${webapps.loc}/${projname}"/>
+			
+		
+		<condition property="luaprefix" value="" else=" -s">
+			<equals arg1="debug" arg2="${build.option}" casesensitive="false" trim="true"/>
+		</condition>
+		
+		
+		<condition property="_debugluafile" value=" _debug.lua" else="">
+			<and>
+				<equals arg1="debug" arg2="${build.option}" casesensitive="false" trim="true"/>
+				<equals arg1="true" arg2="${luadebug}" casesensitive="false" trim="true"/>
+			</and>
+			<!-- equals arg1="debug" arg2="release" casesensitive="false" trim="true"/ -->
+		</condition>
+		
+		<condition property="iphonestartupfile" value="startup_unit.lua" else="${project.loc}\luasrc\iphone\startup\startup.lua">
+			<equals arg1="true" arg2="${unittesting}" casesensitive="false" trim="true"/>
+		</condition>
+		
+		<condition property="codedir" value="lua" else="js">
+			<equals arg1="lua" arg2="${dev.language}" casesensitive="false" trim="true"/>
+		</condition>
+		
+		<condition property="outputdir" value="output" else="jsoutput">
+			<equals arg1="lua" arg2="${dev.language}" casesensitive="false" trim="true"/>
+		</condition>
+		
+		<property name="pre_indir" location="${basedir}/${codedir}"/>
+		<property name="post_outdir" location="${basedir}/jsformat"/>
+		<property name="js.file" location="${basedir}/js-preprocess.js"/>
+        <property name="pre_scripts_indir" location="${basedir}/scripts"/>
+        <property name="pre_scriptswt_indir" location="${basedir}/scriptswt"/>
+		<property name="node.file" location="${basedir}/node"/>
+		<available file="${scripts.dir}/workerthreads" type="dir" property="isworkerthreads"/>
+
+	
+		<taskdef resource="net/sf/antcontrib/antcontrib.properties">
+	      <classpath>
+	        <pathelement location="${plugin.loc}/lib/ant-contrib-0.6.jar"/>
+	      </classpath>
+	    </taskdef>
+		
+
+	    <taskdef name="unset" classname="ise.antelope.tasks.Unset">
+			<classpath>
+			    <pathelement location="${plugin.loc}\lib\AntelopeTasks_3.4.0.jar"/>
+			  </classpath>
+		</taskdef>
+		
+		<taskdef resource="com/kony/ant/antkonyscript.properties">
+	      <classpath>
+	        <pathelement location="${plugin.loc}/lib/KonyAntScript.jar"/>
+	      </classpath>
+	    </taskdef>
+		<osfamily property="os.family"/>
+	    <if>
+	    	<not>
+	    	<equals arg1="${os.family}" arg2="windows"/>
+	    	</not>
+	    	<then>
+    			<exec-shell executable="cmd">
+    				<arg line='/c "chmod 777 ${basedir}/node.sh"'/>
+    			</exec-shell>
+	    	</then>
+	    </if>
+		</target>
+	
+	<target name="build">
+		<!--taskdef name="findfilestask" classname="com.konylabs.tools.task.FindFilesTask" classpath="${kpgenpath}" /--> 
+   		
+		<if>
+		<equals arg1="${dev.language}" arg2="lua"/>
+		<then>
+		   	<echo message="	{_debugluafile}"/>
+		   	<delete file ="_debug.lua" ></delete>
+		   	<touch file= "_debug.lua"></touch>
+			<concat fixlastline="yes" destfile="_debug.lua">
+				debug.connect(${ip_address},${port_number},${client_timeout})
+		   	</concat>
+		</then>
+		</if>
+	   	<copy file="../prepresources.bat" todir="${basedir}"/>
+		<copy file="../kappgen.bat" todir="${basedir}"/>
+		<copy file="../concatresources.bat" todir="${basedir}"/>
+		<copy file="../m4routine.bat" todir="${basedir}"/>
+		<copy file="../formatterroutine.bat" todir="${basedir}"/>
+		<copy file="../regex2.dll" todir="${basedir}"/>
+		<copy file="../m4.exe" todir="${basedir}"/>
+		<copy file="../formatter.exe" todir="${basedir}"/>
+	
+		<!--Copying skins to all lua folders since skins are same for all -->
+		<available file="../../${outputdir}/${codedir}/appskins.${codedir}" property="appskins.exists"></available>
+		<if>
+			<equals arg1="${appskins.exists}" arg2="true"/>
+			<then>
+				<available file="../../${outputdir}/${codedir}wrapper" property="luawrapper.exists"></available>
+				<available file="../../${outputdir}/${codedir}hybrid" property="luahybrid.exists"></available>
+				<if>
+					<equals arg1="${luawrapper.exists}" arg2="true"/>
+					<then>
+						<copy todir="../../${outputdir}/${codedir}wrapper" file="../../${outputdir}/${codedir}/appskins.${codedir}"></copy>
+					</then>
+				</if>
+				<if>
+					<equals arg1="${luahybrid.exists}" arg2="true"/>
+					<then>
+						<copy todir="../../${outputdir}/${codedir}hybrid" file="../../${outputdir}/${codedir}/appskins.${codedir}"></copy>
+					</then>
+				</if>
+			</then>
+		</if>
+		<echo>Copying appskins.${codedir} file from ${outputdir}/${codedir} to ${outputdir}/${codedir}wrapper and ${outputdir}/${codedir}hybrid</echo>
+		
+	   	<available file="kbf" type="dir" property="kbf.present"/>
+	   	<if>
+	   	   	<equals arg1="${bb}" arg2="true" />
+	   	<then>
+	   		<mkdir dir="kbf"/>	
+	   	</then>
+	   	</if>
+
+		<!-- Prajakt : Create the i18n dummy folder incas eit does not exist so that the scripts do not fail -->	
+		<available file="${i18n.properties}" type="dir" property="locales.present"/>
+		<if>
+			<equals arg1="${locales.present}" arg2="true" />
+		<then>
+	
+		</then>
+		<else>
+			<mkdir dir="${i18n.properties}"/>
+		</else>
+		</if>
+
+	   	<delete dir ="images"/>
+	   	<mkdir dir="images"/>
+		<if>
+		<equals arg1="${dev.language}" arg2="lua"/>
+			<then>
+			<delete dir="lua"/>
+			<mkdir dir="lua"/>
+			</then>
+		</if>
+   	
+   		<!-- ${reslocale.str} ant property comes from IDE and will look like en_US/*,en_UK/*-->
+
+		<echo message="res folder: ${resfolder}"/>
+        <echo message="Scripts Dir : ${scripts.dir}" />
+        <echo message="ScriptsWT Dir : ${scripts.dir}/workerthreads" />
+    	<delete dir="scripts"/>
+    	<delete dir="scriptswt"/>
+
+	    <!-- create empty dir -->
+        <mkdir dir="scripts"/>
+		   <!-- 
+		
+		<if>
+		<equals arg1="${dev.language}" arg2="lua"/>
+			<then>
+			   	<copy todir="scripts" failonerror="false">
+		            <fileset dir="${scripts.dir}" includes="*.lua" excludes="startup_unit.lua,_debug.lua,static_home.lua"/>
+		            <filterchain>
+		                 <concatfilter prepend="m4concate.txt"/>
+		            </filterchain>
+			   	</copy>
+			</then>
+			<else>
+			   	<copy todir="scripts" failonerror="false">
+		            <fileset dir="${scripts.dir}" excludes="konylibrary.js" includes="*.js"/>
+			   	</copy>
+			</else>
+		</if>
+-->
+	    <!-- create empty dir for workerthreads-->
+        <mkdir dir="scriptswt"/>
+		<if>
+			<equals arg1="${isworkerthreads}" arg2="true"/>
+		  	<then>
+				<copy todir="scriptswt" failonerror="false">
+					<fileset dir="${scripts.dir}/workerthreads" includes="*.js"/>
+				</copy>
+		  	</then>
+		</if>
+		
+
+        <!-- To ensure that the luac compilation does not break if no .lua file is found -->
+		<if>
+		<equals arg1="${dev.language}" arg2="lua"/>
+			<then>
+		<touch file="scripts/_test.lua"/>
+			</then>
+		</if>
+		
+		
+		<!-- Wrapper mode Start -->
+	   	<if>
+	   	   	<equals arg1="${wrapper.iphone}" arg2="true" />
+	   	  	<then>
+	   	  		<generateLuasrcForSPA dir.name="wrapper\iphone" m4constant.name="m4spaip" forked.dir="/spaiphone" output.lua.dir="${codedir}wrapper"/>
+	   	  		<if>
+	   	  			<equals arg1="${dev.language}" arg2="lua"/>
+	   	  			<then>
+				   	  	<delete file="${project.loc}\luasrc\wrapper\iphone\generated\globalsinit_native.lua"/>
+	   	  			</then>
+	   	  			<else>
+	   	  				<delete file="${project.loc}\jssrc\wrapper\iphone\generated\startup_native.js"/>
+	   	  			</else>
+	   	  		</if>
+	   		</then>
+	   		</if>
+
+	   	<if>
+	   	   	<equals arg1="${wrapper.android}" arg2="true" />
+	   	  	<then>
+	   	  		<generateLuasrcForSPA dir.name="wrapper\android" m4constant.name="m4spaan" forked.dir="/spaandroid" output.lua.dir="${codedir}wrapper"/>
+	   	  		<if>
+	   	  			<equals arg1="${dev.language}" arg2="lua"/>
+	   	  			<then>
+	   	  				<delete file="${project.loc}\luasrc\wrapper\android\generated\globalsinit_native.lua"/>
+	   	  			</then>
+	   	  			<else>
+	   	  				<delete file="${project.loc}\jssrc\wrapper\android\generated\startup_native.js"/>
+	   	  			</else>
+	   	  		</if>
+	   		</then>
+	   	</if>
+
+	   	<if>
+	   	   	<equals arg1="${wrapper.bb}" arg2="true" />
+	   	  	<then>
+	   	  		<generateLuasrcForSPA dir.name="wrapper\bb" m4constant.name="m4spabb" forked.dir="/spablackberry" output.lua.dir="${codedir}wrapper"/>
+	   	  		<if>
+	   	  			<equals arg1="${dev.language}" arg2="lua"/>
+	   	  			<then>
+	   	  				<delete file="${project.loc}\luasrc\wrapper\bb\generated\globalsinit_native.lua"/>
+	   	  			</then>
+	   	  			<else>
+	   	  				<delete file="${project.loc}\jssrc\wrapper\bb\generated\startup_native.js"/>
+	   	  			</else>
+	   	  		</if>
+	   		</then>
+	   	</if>
+		
+	   	<if>
+	   	   	<equals arg1="${wrapper.ipad}" arg2="true" />
+	   	  	<then>
+	   	  		<generateLuasrcForSPATablet dir.name="wrapper\ipad" m4constant.name="m4spaipad" forked.dir="/spaipad" output.lua.dir="${codedir}wrapper"/>
+		   	  	<if>
+		   	  		<equals arg1="${dev.language}" arg2="lua"/>
+			   	  	<then>
+			   	  		<delete file="${project.loc}\luasrc\wrapper\ipad\generated\globalsinit_native.lua"/>
+			   	  	</then>
+		   	  		<else>
+		   	  			<delete file="${project.loc}\jssrc\wrapper\ipad\generated\startup_native.js"/>
+		   	  		</else>
+		   	  	</if>
+	   		</then>
+	   		</if>
+
+	   	<if>
+	   	   	<equals arg1="${wrapper.tabrcandroid}" arg2="true" />
+	   	  	<then>
+	   	  		<generateLuasrcForSPATablet dir.name="wrapper\androidtab" m4constant.name="m4spatabandroid" forked.dir="/spaandroidtablet" output.lua.dir="${codedir}wrapper"/>
+		   	  	<if>
+		   	  		<equals arg1="${dev.language}" arg2="lua"/>
+			   	  	<then>
+	   	  				<delete file="${project.loc}\luasrc\wrapper\androidtab\generated\globalsinit_native.lua"/>
+			   	  	</then>
+			   	  	<else>
+			   	  		<delete file="${project.loc}\jssrc\wrapper\androidtab\generated\startup_native.js"/>
+		   	  		</else>
+			   	</if>
+	   		</then>
+	   	</if>
+		<!-- Wrapper mode End -->
+ 	 
+		<!-- Blackberry build -->
+		<if>
+			<equals arg1="${bb}" arg2="true" />
+			<then>
+				<ant antfile="bbbuild.xml" target="build"/>
+			</then>
+		</if>
+		
+		<!-- Blackberry10 build -->
+		<if>
+			 <or>
+			 	<equals arg1="${bb10}" arg2="true" />
+			 	<equals arg1="${bbq10}" arg2="true" />
+			 	<equals arg1="${bba10}" arg2="true" />
+			   </or>
+			
+			<then>
+				<ant antfile="bb10build.xml" target="build"/>
+			</then>
+		</if>
+	   
+		<!-- J2ME build -->
+	    <if>
+	      	<equals arg1="${j2me}" arg2="true" />
+	    	<then>
+	    		<ant antfile="j2mebuild.xml" target="build"/>
+	    	</then>
+	    </if>
+	   	
+	   	<!-- Windows Desktop Build -->	
+	   	<if>
+	   	   	<equals arg1="${desktop_kiosk}" arg2="true" />
+	    <then>
+	    	<ant antfile="desktop_kioskbuild.xml" target="build"/>
+	    </then>
+	    </if>
+	   	
+	   	
+		<!--- Win Mobile7 Build -->
+	   	<if>
+	   		<equals arg1="${winmobile}" arg2="true" />
+	  	<then>
+	  		<ant antfile="winmobile7build.xml" target="build"/>
+	  	</then>
+	  	</if> 
+	   	
+		<!--- Win Phone8 Build -->
+	   	<if>
+	   		<equals arg1="${winphone8}" arg2="true" />
+	  	<then>
+	  		<ant antfile="winphone8build.xml" target="build"/>
+	  	</then>
+	  	</if> 
+			
+		
+		<!--- Win Phone81s Build -->
+	   	<if>
+	   		<equals arg1="${winphone81s}" arg2="true" />
+	  	<then>
+	  		<ant antfile="winphone8build.xml" target="build"/>
+	  	</then>
+	  	</if> 
+		
+		<!--- Win Phone10 Build -->
+	   	<if>
+	   		<equals arg1="${winphone10}" arg2="true" />
+	  	<then>
+	  		<ant antfile="winphone10build.xml" target="build"/>
+	  	</then>
+	  	</if> 
+			
+		<!--- Windows8 Build -->
+	   	<if>
+	   		<equals arg1="${windows8}" arg2="true" />
+	  	<then>
+	  		<ant antfile="windows8build.xml" target="build"/>
+	  	</then>
+	  	</if> 
+	   	
+		<!--- Windows10 Build -->
+		<echo message = "Argument = ${windows10}" />
+		<if>
+	   		<equals arg1="${windows10}" arg2="true" />
+	  	<then>
+	  		<ant antfile="windows10build.xml" target="build"/>
+	  	</then>
+	  	</if> 
+			
+	   	<!--- Win Mobile6x Build -->
+	   	<if>
+	   		<equals arg1="${winmobile6x}" arg2="true" />
+	  	<then>
+	  		<ant antfile="winmobile6xbuild.xml" target="build"/>
+	  	</then>
+	  	</if> 
+			
+		<!-- Thinclient JS Preprocessing Start-->
+		<if>
+			<equals arg1="${dev.language}" arg2="js"/>
+			<then>
+			   	<if>
+			   	   	<equals arg1="${bjs.selected}" arg2="true" />
+			   	  	<then>
+			   	  		<generateLuasrcForSPA dir.name="bjs" m4constant.name="m4bjs" forked.dir="/bjs"/>
+			   		</then>
+			   	</if>
+				
+			   	<if>
+			   	   	<equals arg1="${xhtmlnormal.selected}" arg2="true" />
+			   	  	<then>
+			   	  		<generateLuasrcForSPA dir.name="normal" m4constant.name="m4basic" forked.dir="/normal"/>
+			   		</then>
+			   	</if>
+				
+			   	<if>
+			   	   	<equals arg1="${xhtmladviphone.selected}" arg2="true" />
+			   	  	<then>
+			   	  		<generateLuasrcForSPA dir.name="adviphone" m4constant.name="m4xadvip" forked.dir="/adviphone"/>
+			   		</then>
+			   	</if>
+				
+			   	<if>
+			   	   	<equals arg1="${xhtmladvandroid.selected}" arg2="true" />
+			   	  	<then>
+			   	  		<generateLuasrcForSPA dir.name="advandroid" m4constant.name="m4xadvand" forked.dir="/advandroid"/>
+			   		</then>
+			   	</if>
+				
+			   	<if>
+			   	   	<equals arg1="${xhtmladvbb.selected}" arg2="true" />
+			   	  	<then>
+			   	  		<generateLuasrcForSPA dir.name="advblackberry" m4constant.name="m4xadvbb" forked.dir="/advblackberry"/>
+			   		</then>
+			   	</if>
+				
+			   	<if>
+			   	   	<equals arg1="${xhtmladvpalm.selected}" arg2="true" />
+			   	  	<then>
+			   	  		<generateLuasrcForSPA dir.name="advpalm" m4constant.name="m4xadvpalm" forked.dir="/advpalm"/>
+			   		</then>
+			   	</if>
+				
+			   	<if>
+			   	   	<equals arg1="${xhtmladvnth.selected}" arg2="true" />
+			   	  	<then>
+			   	  		<generateLuasrcForSPA dir.name="advnth" m4constant.name="m4xadvnth" forked.dir="/advnth"/>
+			   		</then>
+			   	</if>
+	   		</then>
+		</if>
+		<!-- Thinclient JS Preprocessing End-->	
+		
+	   	
+	   	<!--- SPA IPHONE Build -->
+	   	<if>
+	   		<equals arg1="${spa.iphone}" arg2="true" />
+	  	<then>
+	  		<generateLuasrcForSPA dir.name="spaiphone" m4constant.name="m4spaip" forked.dir="/spaiphone"/>
+		</then>
+		</if>
+	   	
+	   	
+		<!--- SPA Android Build -->
+	   	<if>
+	   	   	<equals arg1="${spa.android}" arg2="true" />
+	   	  	<then>
+	   	  		<generateLuasrcForSPA dir.name="spaandroid" m4constant.name="m4spaan" forked.dir="/spaandroid"/>
+	   		</then>
+	   	</if>
+	   	
+			
+		<!--- SPA BB Build -->
+	   	<if>
+	   	   	<equals arg1="${spa.bb}" arg2="true" />
+	   	  	<then>
+	   	  		<generateLuasrcForSPA dir.name="spablackberry" m4constant.name="m4spabb" forked.dir="/spablackberry"/>
+	   		</then>
+	   	</if>
+		
+		<!--- SPA BBNth Build -->
+	   	<if>
+	   	   	<equals arg1="${spa.bbnth}" arg2="true" />
+	   	  	<then>
+	   	  		<generateLuasrcForSPA dir.name="spabbnth" m4constant.name="m4spabbnth" forked.dir="/spabbnth"/>
+	   		</then>
+	   	</if>
+			
+		<!--- SPA Windows Build -->
+	   	<if>
+	   	   	<equals arg1="${spa.windows}" arg2="true" />
+	   	  	<then>
+	   	  		<generateLuasrcForSPA dir.name="spawindows" m4constant.name="m4spawindows" forked.dir="/spawindows"/>
+	   		</then>
+	   	</if>
+		
+	   	<if>
+	   	   		<equals arg1="${spa.winphone8}" arg2="true" />
+	   	  	<then>
+	   	  		<generateLuasrcForSPA dir.name="spawinphone8" m4constant.name="m4spawinphone8" forked.dir="/spawinphone8"  />
+	   		</then>
+	   	</if>
+	
+		<!---Desktop web Build -->
+	   	<if>
+	   	   	<equals arg1="${desktopweb}" arg2="true" />
+	   	  	<then>
+	   	  		<generateLuasrcForSPADesktop dir.name="desktopweb" m4constant.name="m4desktopweb" forked.dir="/desktopweb"/>
+	   		</then>
+	   	</if>
+		 
+		 
+		
+	   	<if>
+	   	   	<equals arg1="${spa.ipad}" arg2="true" />
+	   	  	<then>
+	   	  		<generateLuasrcForSPATablet dir.name="spaipad" m4constant.name="m4spaipad" forked.dir="/spaipad"/>
+	   		</then>
+	   	</if>
+		
+		 
+	   	<if>
+	   	   	<equals arg1="${spa.tabandroid}" arg2="true" />
+	   	  	<then>
+	   	  		<generateLuasrcForSPATablet dir.name="spaandroidtablet" m4constant.name="m4spatabandroid" forked.dir="/spaandroidtablet"/>
+	   		</then>
+	   	</if>		
+		
+	   	<if>
+	   	   	<equals arg1="${spa.tabwindows}" arg2="true" />
+	   	  	<then>
+	   	  		<generateLuasrcForSPATablet dir.name="spawindowstablet" m4constant.name="m4spatabwindows"  forked.dir="/spawindowstablet"/>
+	   		</then>
+	   	</if>
+		
+	   	<if>
+	   	   	<equals arg1="${spa.playbook}" arg2="true" />
+	   	  	<then>
+	   	  		<generateLuasrcForSPATablet dir.name="spaplaybook" m4constant.name="m4spaplaybook"/>
+	   		</then>
+	   	</if>
+		<if>
+	   	   	<equals arg1="${playbook}" arg2="true" />
+	   	  	<then>
+	   	  		<generateLuasrcForSPATablet dir.name="playbook" m4constant.name="m4playbook"/>
+	   		</then>
+		 </if>
+		
+	 
+		<!-- iPhone build -->
+		<if>
+		<equals arg1="${iphone}" arg2="true" />
+		<then>
+			<ant antfile="iphonebuild.xml" target="build"/>
+		</then>
+		</if>
+	   	
+	   	
+		<!-- iPad build -->
+		<if>
+		<equals arg1="${ipad}" arg2="true" />
+		<then>
+			<ant antfile="ipadbuild.xml" target="build"/>
+		</then>
+		</if>
+	
+	
+	   	
+		<!-- Android build -->
+		<if>
+		<equals arg1="${android}" arg2="true" />
+		<then>
+			<ant antfile="androidbuild.xml" target="build"/>
+		</then>
+		</if>
+	   	
+		<!-- Android Tablet build -->
+		<if>
+		<equals arg1="${tabrcandroid}" arg2="true" />
+		<then>
+			<ant antfile="tabrcandroidbuild.xml" target="build"/>
+		</then>
+		</if>
+	   	
+		<!-- Symbian build -->
+		<if>
+			<equals arg1="${symbian}" arg2="true" />
+		<then>
+			<ant antfile="symbianbuild.xml" target="build"/>
+		</then>
+		</if>
+	</target>
+	
+	
+	<target name="buildiPhoneResources" depends="init">
+		<ant antfile="iphonebuild.xml" target="buildResources"/>
+	</target>
+
+	<target name="buildiPadResources" depends="init">
+		<ant antfile="ipadbuild.xml" target="buildResources"/>
+	</target>
+	
+	<target name="buildKAR" depends="init">
+		<ant antfile="iphonebuild.xml" target="buildKAR"/>
+	</target>	
+	
+	<target name="iPadbuildKAR" depends="init">
+		<ant antfile="ipadbuild.xml" target="iPadbuildKAR"/>
+	</target>
+	
+ 
+			
+
+	<target name="buildwar" depends="build">
+		<if>
+	   	<or>
+	   		<equals arg1="${j2me}" arg2="true" />
+	   		<equals arg1="${bb}" arg2="true" />
+	   		<equals arg1="${iphone}" arg2="true" />
+	   		<equals arg1="${ipad}" arg2="true" />
+	   		<equals arg1="${winmobile6x}" arg2="true" />
+	   		<equals arg1="${android}" arg2="true" />
+	   		<equals arg1="${symbian}" arg2="true" />
+	   	</or>
+	   	<then> 			
+	   		<available file="${basedir}/ipadkbf" type="dir" property="ipadkbf.present"/>
+	   		<if>
+			<equals arg1="${ipadkbf.present}"  arg2="true"/>
+	   			<then>
+	   				<copy todir="${jetty.web}r/kbf" overwrite="true">
+						<fileset dir="${basedir}/ipadkbf" includes="*.KAR,*.kbf"/>
+					</copy>
+	   			</then>
+	   		</if>
+	   		<available file="${basedir}/iphonekbf" type="dir" property="iphonekbf.present"/>
+	   		<if>
+			<equals arg1="${iphonekbf.present}"  arg2="true"/>
+	   			<then>
+	   				<copy todir="${jetty.web}r/kbf" overwrite="true">
+						<fileset dir="${basedir}/iphonekbf" includes="*.KAR,*.kbf"/>
+					</copy>
+	   			</then>
+	   		</if>
+	   	</then>
+	   	</if>
+	</target>
+	
+	<target name="nativeiphone" depends="init">
+		<ant antfile="iphonebuild.xml" target="nativeiphone"/>
+	</target>
+	
+	<target name="nativeipad" depends="init">
+		<ant antfile="ipadbuild.xml" target="nativeipad"/>
+	</target>
+	
+	<!-- Making Lua SRC is read only -Rakesh -->
+	<target name="makereadonly">
+		<available file="${project.loc}/luasrc" type="dir" property="luasrc.present"/>
+		<if>
+			<equals arg1="${luasrc.present}" arg2="true"/>
+			<then>
+				<attrib readonly="true">
+				  <fileset dir="${project.loc}/luasrc"/>
+				</attrib>
+			</then>
+		</if>
+	</target>
+
+	<!-- Main target  -->
+	<target name="all" depends="init, build, makereadonly, buildwar"/>
+	
+	<!-- Added by pattabhi for command line build cli -->
+	<target name="cliall" depends="init, build"/>
+	
+	<macrodef name="removeprints">
+		<attribute name="dir.name" default=""/>
+		<sequential>
+	   		<if>
+				<equals arg1="${removeprintstatements}" arg2="true" />
+	      	<then> 
+				<replace dir="${project.loc}\${dev.language}src\@{dir.name}">
+				  <include name="**/*.${dev.language}"/>
+				    <replacefilter token=";kqt;" value="'"/>
+				</replace>
+	      		<if>
+	      		<equals arg1="${dev.language}" arg2="lua"/>
+	      		<then>
+					<replaceregexp byline="true" flags="g">
+					  <regexp pattern="(^[ \t]*print[ \t]*[(].+)"/>
+					  <substitution expression="--\1"/>
+					   <fileset dir="${project.loc}\luasrc\@{dir.name}" includes="**/*.lua"/>
+					 </replaceregexp>
+	      		</then>
+	      		</if>
+			</then>
+			<else>
+				<replace dir="${project.loc}\${dev.language}src\@{dir.name}">
+				  <include name="**/*.${dev.language}"/>
+				    <replacefilter token=";kqt;" value="'"/>
+				</replace>
+			</else>
+	   		</if>
+		</sequential>
+	</macrodef>
+	
+	<macrodef name="generateLuasrcForSPA">
+		<attribute name="dir.name" default=""/>
+		<attribute name="m4constant.name" default=""/>
+		<attribute name="forked.dir" default=""/>
+		<attribute name="output.lua.dir" default="${codedir}"/>
+		<sequential>
+			
+			<delete dir="${codedir}" failonerror="false"/>
+			<mkdir dir="${codedir}"/>
+			<copy todir="${codedir}" overwrite="true">
+   	  		    <fileset dir="../../${outputdir}/@{output.lua.dir}" excludes="startup.lua,tcchannel.lua,rcchannel.lua" casesensitive="false"/>
+   	  	 	</copy>
+   			<available file="../../${outputdir}/@{output.lua.dir}@{forked.dir}" type="dir" property="@{m4constant.name}_lua.present"/>
+   			<if>
+   				<equals arg1="${@{m4constant.name}_lua.present}" arg2="true" />
+   				<then>
+   	  				<copy todir="${codedir}" overwrite="true">
+   	  		   			<fileset dir="../../${outputdir}/@{output.lua.dir}@{forked.dir}" excludes="startup.lua,tcchannel.lua,rcchannel.lua" casesensitive="false"/>
+   	  				</copy>
+   				</then>
+   			</if>
+			<unset name="@{m4constant.name}_lua.present"/>
+			
+			<delete dir="@{dir.name}"/>
+			<mkdir dir="@{dir.name}"/>
+			
+			<createAndCopyToLuasrc dir.name="@{dir.name}" m4constant.name="@{m4constant.name}" output.lua.dir="@{output.lua.dir}"/>
+		</sequential>
+	</macrodef>
+	
+	<macrodef name="generateLuasrcForSPATablet">
+			<attribute name="dir.name" default=""/>
+			<attribute name="m4constant.name" default=""/>
+			<attribute name="forked.dir" default=""/>
+			<attribute name="output.lua.dir" default="${codedir}"/>
+			<sequential>
+				<echo message="output.lua.dir:${codedir}" />
+				<delete dir="${codedir}" failonerror="false"/>
+				<mkdir dir="${codedir}"/>
+				<copy todir="${codedir}" overwrite="true">
+	   	  		    <fileset dir="../../${outputdir}/@{output.lua.dir}/tablet" excludes="startup.lua,tcchannel.lua,rcchannel.lua" casesensitive="false"/>
+	   	  	 	</copy>
+				<if>
+					<equals arg1="${dev.language}" arg2="${codedir}"/>
+					<then>
+				    	<copy todir="${codedir}" overwrite="true">
+				  			<fileset dir="../../${outputdir}/@{output.lua.dir}" includes="appskins.${codedir}"></fileset>
+				  	 	</copy>
+		    		</then>
+				</if>
+	   			<available file="../../${outputdir}/@{output.lua.dir}/tablet@{forked.dir}" type="dir" property="@{dir.name}_lua.present"/>
+	   			<if>
+	   				<equals arg1="${@{dir.name}_lua.present}" arg2="true" />
+	   				<then>
+	   	  				<copy todir="${codedir}" overwrite="true">
+	   	  		   			<fileset dir="../../${outputdir}/@{output.lua.dir}/tablet@{forked.dir}" excludes="startup.lua,tcchannel.lua,rcchannel.lua" casesensitive="false"/>
+	   	  				</copy>
+	   				</then>
+	   			</if>
+				
+				<delete dir="@{dir.name}"/>
+				<mkdir dir="@{dir.name}"/>
+				<mkdir dir="@{dir.name}/temp"/>
+				
+				<createAndCopyToLuasrc dir.name="@{dir.name}" m4constant.name="@{m4constant.name}" startup.luadir="/tablet" output.lua.dir="@{output.lua.dir}"/>
+			</sequential>
+		</macrodef>
+	
+	
+	<macrodef name="generateLuasrcForSPADesktop">
+		<attribute name="dir.name" default=""/>
+		<attribute name="m4constant.name" default=""/>
+		<attribute name="forked.dir" default=""/>
+		<sequential>
+			
+			<delete dir="${codedir}" failonerror="false"/>
+			<mkdir dir="${codedir}"/>
+			<copy todir="${codedir}" overwrite="true">
+   	  		    <fileset dir="../../${outputdir}/${codedir}/desktop" excludes="startup.lua,tcchannel.lua,rcchannel.lua" casesensitive="false"/>
+   	  	 	</copy>
+			<if>
+				<equals arg1="${dev.language}" arg2="${codedir}"/>
+				<then>
+			    	<copy todir="${codedir}" overwrite="true">
+			  			<fileset dir="../../${outputdir}/${codedir}" includes="appskins.${codedir}"></fileset>
+			  	 	</copy>
+	    		</then>
+			</if>
+   			<available file="../../${outputdir}/${codedir}/desktop@{forked.dir}" type="dir" property="@{dir.name}_lua.present"/>
+   			<if>
+   				<equals arg1="${@{dir.name}_lua.present}" arg2="true" />
+   				<then>
+   	  				<copy todir="${codedir}" overwrite="true">
+   	  		   			<fileset dir="../../${outputdir}/${codedir}/desktop@{forked.dir}" excludes="startup.lua,tcchannel.lua,rcchannel.lua" casesensitive="false"/>
+   	  				</copy>
+   				</then>
+   			</if>
+			
+			<delete dir="@{dir.name}"/>     
+			<mkdir dir="@{dir.name}"/>
+			<mkdir dir="@{dir.name}/temp"/>
+			
+			<createAndCopyToLuasrc dir.name="@{dir.name}" m4constant.name="@{m4constant.name}" startup.luadir="/desktop"/>
+		</sequential>
+	</macrodef>
+	
+	<macrodef name="createAndCopyToLuasrc">
+		<attribute name="dir.name" default=""/>
+		<attribute name="m4constant.name" default=""/>
+		<attribute name="startup.luadir" default=""/>
+		<attribute name="output.lua.dir" default="${codedir}"/>
+		<sequential>
+			<if>
+			<equals arg1="${dev.language}" arg2="js"/>
+				<then>
+					<propertyregex property="jsPreprocConstant"
+									input="@{m4constant.name}"
+									regexp="m4"
+									replace=""/>
+					
+					<echo message="DIR: @{dir.name} M4Constant: @{m4constant.name} jsPreProcConstant:${jsPreprocConstant}"/>
+					<delete dir="${project.loc}\jssrc\@{dir.name}" excludes="**/.svn"/>
+					<if>
+						<equals arg1="${isMVC}" arg2="true"/>
+						<then>
+						</then>
+					<else>
+						<mkdir dir="${project.loc}\jssrc\@{dir.name}\generated"/>
+						<mkdir dir="${project.loc}\jssrc\@{dir.name}\nongenerated"/>
+					</else>
+					</if>
+					<if>
+						<equals arg1="${isworkerthreads}" arg2="true"/>
+					  		<then>
+					  				<if>
+					  					<equals arg1="${isMVC}" arg2="true"/>
+					  					<then>
+											<mkdir dir="${project.loc}\jssrc\@{dir.name}\workerthreads"/>
+										</then>
+										<else>
+											<mkdir dir="${project.loc}\jssrc\@{dir.name}\nongenerated\workerthreads"/>
+										</else>
+									</if>
+								
+					  		</then>
+					</if>
+					<mkdir dir="${project.loc}\jssrc\@{dir.name}\startup"/>
+					
+					<delete dir="jsformat"/>
+					<mkdir dir="jsformat"/>
+					
+					 <tstamp>
+					 	<format property="time" pattern="MM/dd/yyyy hh:mm:ss aa"
+						offset="-5" unit="hour"/>
+					  </tstamp>
+					  <echo message="Preprocessing and Beautifying JS Files Start Time: ${time}" />
+					  <exec-script executable="${node.file}" failonerror="true">
+					  <arg value="${js.file}"/>
+					  <arg value="${pre_indir}"/>
+					  <arg value="${post_outdir}"/>
+					  <arg value="${jsPreprocConstant}"/>
+					  <arg value="${plugin.loc}/preview/node_mac"/>
+					</exec-script>
+					  <tstamp>
+					<format property="time2" pattern="MM/dd/yyyy hh:mm:ss aa"
+						offset="-5" unit="hour"/>
+					</tstamp>
+                    <echo message="Preprocessing and Beautifying JS Files End Time: ${time2}" />
+					
+					<if>
+						<equals arg1="${isMVC}" arg2="true"/>
+							<then>
+								<!-- these js files are generated by studio codegen so moving them to default folder -->
+								<copy todir="${project.loc}\jssrc\@{dir.name}\default">
+									<fileset dir="jsformat" includes="*.js" excludes="startup.js"/>
+								</copy>
+							</then>
+							<else>
+								<copy todir="${project.loc}\jssrc\@{dir.name}\generated">
+									<fileset dir="jsformat" includes="*.js" excludes="startup.js"/>
+								</copy>
+							</else>
+					</if>
+					
+					
+					<copy todir="${project.loc}\jssrc\@{dir.name}\startup">
+						<fileset dir="jsformat" includes="startup.js"/>
+					</copy>
+				
+					<delete dir="jsformat"/>
+					<mkdir dir="jsformat"/>
+					
+					<tstamp>
+							<format property="time" pattern="MM/dd/yyyy hh:mm:ss aa"
+								offset="-5" unit="hour"/>
+						  </tstamp>
+					  <echo message="Preprocessing and Beautifying JS Modules Start Time: ${time}" />
+					   <exec-script executable="${node.file}" failonerror="true">
+						   <arg value="${js.file}"/>
+						   <arg value="${pre_scripts_indir}"/>
+						   <arg value="${post_outdir}"/>
+						   <arg value="${jsPreprocConstant}"/>
+					   		<arg value="${plugin.loc}/preview/node_mac"/>
+					  </exec-script>
+					  <tstamp>
+							<format property="time2" pattern="MM/dd/yyyy hh:mm:ss aa"
+								offset="-5" unit="hour"/>
+					 </tstamp>
+						<echo message="Preprocessing and Beautifying JS Modules End Time: ${time2}" />  
+					<if>
+						<equals arg1="${isMVC}" arg2="true"/>
+						<then>
+							<copy todir="${project.loc}\jssrc\@{dir.name}\default">
+								<fileset dir="jsformat" includes="*.js"/>
+								<!--<fileset dir="${plugin.loc}/jslibrary" includes="konylibrary.js"/>
+								<fileset dir="${plugin.loc}/js/konyjs" includes="require.js"/>
+								<fileset dir="${plugin.loc}/js/konyjs" includes="kony_mvc.js"/>-->
+							</copy>
+						</then>
+						<else>
+							<copy todir="${project.loc}\jssrc\@{dir.name}\nongenerated">
+								<fileset dir="jsformat" includes="*.js"/>
+								<fileset dir="${plugin.loc}/jslibrary" includes="konylibrary.js"/>
+								<fileset dir="${plugin.loc}/js/konyjs" includes="require.js"/>
+							</copy>
+						</else>
+					</if>
+					
+					<if>
+						<equals arg1="${isworkerthreads}" arg2="true"/>
+					  	<then>
+							<delete dir="jsformat"/>
+							<mkdir dir="jsformat"/>
+							
+							<tstamp>
+									<format property="time" pattern="MM/dd/yyyy hh:mm:ss aa"
+										offset="-5" unit="hour"/>
+								  </tstamp>
+							  <echo message="Preprocessing and Beautifying Worker Threads JS Modules Start Time: ${time}" />
+							   <exec-script executable="${node.file}" failonerror="true">
+								   <arg value="${js.file}"/>
+								   <arg value="${pre_scriptswt_indir}"/>
+								   <arg value="${post_outdir}"/>
+								   <arg value="${jsPreprocConstant}"/>
+							   		<arg value="${plugin.loc}/preview/node_mac"/>
+							  </exec-script>
+							  <tstamp>
+									<format property="time2" pattern="MM/dd/yyyy hh:mm:ss aa"
+										offset="-5" unit="hour"/>
+							 </tstamp>
+								<echo message="Preprocessing and Beautifying JS Modules End Time: ${time2}" />  
+					  		<if>
+					  			<equals arg1="${isMVC}" arg2="true"/>
+					  		<then>
+					  			<copy todir="${project.loc}\jssrc\@{dir.name}\workerthreads">
+								<fileset dir="jsformat" includes="*.js"/>
+								</copy>
+							</then>
+							<else>
+								<copy todir="${project.loc}\jssrc\@{dir.name}\nongenerated\workerthreads">
+								<fileset dir="jsformat" includes="*.js"/>
+								</copy>
+							</else>
+							</if>
+					  	</then>
+					</if>
+					
+					<delete dir="jsformat"/>
+					
+					<removeprints dir.name="@{dir.name}"/>
+					
+					<unset name="jsPreprocConstant"/>
+					
+					<available file="${project.loc}\jssrc\@{dir.name}\nongenerated\mbaasconfig.js" type="file" property="mbassconfig.present"/>
+			        <if>
+			        	<and>
+					   		<equals arg1="${mbassconfig.present}"  arg2="true"/>
+			        		<equals arg1="${mbaasappkey.injection.required}"  arg2="true"/>
+			        	</and>
+					       <then>					       		
+					       		<property name="mbassconfig.file" value="${project.loc}\jssrc\@{dir.name}\nongenerated\mbaasconfig.js"/>
+	       						<replace file="${mbassconfig.file}" token="$appKey" value="'${mbaasappkey}'"/>
+	       						<replace file="${mbassconfig.file}" token="$appSecret" value="'${mbaasappsecret}'"/>
+					       </then>
+				    </if>
+				</then>
+				<else>
+					<echo message="DIR: @{dir.name} M4Constant: @{m4constant.name}"/>
+					<delete dir="${project.loc}\luasrc\@{dir.name}"/>
+					<if>
+						<equals arg1="${isMVC}" arg2="true"/>
+						<then>
+						</then>
+					<else>
+						<mkdir dir="${project.loc}\jssrc\@{dir.name}\generated"/>
+						<mkdir dir="${project.loc}\jssrc\@{dir.name}\nongenerated"/>
+					</else>
+					</if>
+					<mkdir dir="${project.loc}\luasrc\@{dir.name}\startup"/>
+					
+					<delete dir="luasrctemp"/>
+					<mkdir dir="luasrctemp"/>
+					
+					<!-- do the pre-processing for generated code -->
+					<exec executable="${basedir}/m4routine.bat" failonerror="true" failifexecutionfails="true">
+						<env key="PATH" path="${env.PATH};${basedir}/m4.exe;${basedir}/regex2.dll;"/>
+						<arg value="lua"/>
+						<arg value="luasrctemp"/>
+						<arg value="@{m4constant.name}"/>
+					</exec>
+
+
+					<exec executable="${basedir}/formatterroutine.bat" failonerror="true" failifexecutionfails="true">
+						<env key="PATH" path="${env.PATH};${basedir}/formatter.exe;${basedir}/regex2.dll;"/>
+						<arg value="luasrctemp"/>
+						<arg value="${project.loc}\luasrc\@{dir.name}\generated"/>
+					</exec>
+					
+					<delete dir="luasrctemp"/>
+					
+					<!-- do the pre-processing for modules code -->		
+					<exec executable="${basedir}/m4routine.bat" failonerror="true" failifexecutionfails="true">
+						<env key="PATH" path="${env.PATH};${basedir}/m4.exe;${basedir}/regex2.dll;"/>
+						<arg value="scripts"/>
+						<arg value="${project.loc}\luasrc\@{dir.name}\nongenerated"/>
+						<arg value="@{m4constant.name}"/>
+					</exec>
+
+					<removeprints dir.name="@{dir.name}"/>
+					
+					<echo message="output.lua.dir :@{output.lua.dir}" />
+					<echo message="startup.luadir :@{startup.luadir}" />
+					
+					<copy todir="${project.loc}\luasrc\@{dir.name}\startup">
+						<fileset dir="../../output/@{output.lua.dir}@{startup.luadir}" includes="rcchannel.lua,startup.lua"/>
+					</copy>
+				</else>
+			</if>
+
+		</sequential>
+	</macrodef>
+
+</project>

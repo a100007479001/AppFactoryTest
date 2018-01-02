@@ -1,0 +1,144 @@
+<!--@Note: This is read only file and not being used at runtime,if we want to update anything do it in zip file \trunk\guieditor\lib\build.zip --> 
+<project name="Kony" basedir="." default="build">
+   
+	<target name="build">
+		<echo message = "Desktop Kiosk is invoked" />
+  		<unset name="logo"/>
+  		<var name="logo" value="${logo_winmobile}"/>
+  		<unset name="splash.image"/>
+  		<var name="splash.image" value="${splash.image_winmobile}"/>
+  		
+		<if>
+			<not>
+			<equals arg1="${desktop_kiosk.hybridmode}" arg2="wrapper"/>
+			</not>
+			<then>
+				<delete dir="${codedir}" failonerror="false"/>
+				<mkdir dir="${codedir}"/>
+		    	<copy todir="${codedir}" overwrite="true">
+		  		    <fileset dir="../../${outputdir}/${codedir}/desktop" excludes="startup.lua,tcchannel.lua,rcchannel.lua" casesensitive="false"/>
+		    	     <fileset dir="../../${outputdir}/${codedir}" includes="appskins.${codedir}" casesensitive="false"/>
+		  	 	</copy>
+				<available file="../../${outputdir}/${codedir}/desktop/kiosk" type="dir" property="windows8lua.present"/>
+				<if>
+					<equals arg1="${windows8lua.present}" arg2="true" />
+					<then>
+		  				<copy todir="${codedir}" overwrite="true">
+		  		   			     <fileset dir="../../${outputdir}/${codedir}/desktop/kiosk" excludes="startup.lua,tcchannel.lua,rcchannel.lua" casesensitive="false"/>
+		  				</copy>
+					</then>
+				</if>
+			</then>
+		</if>
+			
+	    <delete dir="kiosk"/>
+		<mkdir dir="kiosk"/>
+		<mkdir dir="kiosk"/>
+  		<mkdir dir="kiosk/resources"/>
+
+    	<delete dir ="resources"/>
+		<mkdir dir="resources"/>
+		
+		<copy todir="resources" overwrite="true">
+   			<fileset dir="${resfolder}/common"/>
+   				<fileset dir="${resfolder}/desktop/common"/>
+   			<fileset dir="${i18n.xml}" includes="**/*.*" casesensitive="false"/>   			
+   			
+   		</copy>
+    	
+    	<echo message="font test ${fonts_workspace}" />
+  		
+        <available file="${fonts_workspace}/kiosk" type="dir" property="desktop_kiosk.workspacefonts.present" /> 
+        <if>
+            <equals arg1="${desktop_kiosk.workspacefonts.present}" arg2="true" /> 
+            <then>
+                <copy todir="resources" overwrite="true">
+                    <fileset dir="${fonts_workspace}/kiosk" includes="*.ttf"/>
+                </copy>
+            </then>
+        </if>
+    	
+    	<echo message="resource test ${resfolder}" />
+		<copy todir="resources" overwrite="true">
+			<fileset dir="${resfolder}/desktop/native/kiosk"/>
+		</copy>
+    	
+    	
+        <available file="${resfolder}/fonts/Kiosk" type="dir" property="desktop_kiosk.fonts.present" /> 
+        <if>
+            <equals arg1="${desktop_kiosk.fonts.present}" arg2="true" /> 
+            <then>
+                <copy todir="resources" overwrite="true">
+                    <fileset dir="${resfolder}/fonts/Kiosk" includes="*.ttf" casesensitive="false" />
+                </copy>
+            </then>
+        </if>
+    	
+		<if>
+			<equals arg1="${desktop_kiosk.hybridmode}" arg2="wrapper"/>
+			<then>
+				<exec executable="cmd.exe" failonerror="true" failifexecutionfails="true">
+					<env key="PATH" path="${env.PATH};${appfolder}/build/luacompiler"/>
+					<arg line='/c "luac${luaprefix} -o ${luac.file}${_debugluafile} static_home.lua"'/>
+				</exec>
+			</then>
+			<else>
+				<createAndCopyToLuasrc dir.name="kiosk" m4constant.name="m4desktop_kiosk" startup.luadir="/desktop"/>
+				<if>
+								<equals arg1="${dev.language}" arg2="lua"/>
+								<then>	
+				<exec executable="cmd.exe" failonerror="true" failifexecutionfails="true">
+					<env key="PATH" path="${env.PATH};${appfolder}/build/luacompiler"/>
+					<arg line='/c "luac${luaprefix} -o ${luac.file} ${project.loc}\luasrc\kiosk\startup\rcchannel.lua ${project.loc}\luasrc\kiosk\nongenerated\*.lua ${project.loc}\luasrc\kiosk\generated\*.lua ${project.loc}\luasrc\kiosk\startup\startup.lua"'/>
+				</exec>
+									</then>
+		 				</if>
+			</else>
+   		</if>
+		
+   		<copy todir="kiosk/resources" overwrite="true">
+   			<fileset dir="${basedir}/resources"/>
+   		</copy>
+		<if>
+			<equals arg1="${dev.language}" arg2="lua"/>
+			<then>
+				<copy todir="${project.loc}\luasrc\kiosk\startup">
+							<fileset dir="../../output/lua/desktop" includes="rcchannel.lua,startup.lua"/>
+						</copy>
+							
+						<exec executable="cmd.exe" failonerror="true" failifexecutionfails="true">
+							<env key="PATH" path="${env.PATH};${appfolder}/build/luacompiler"/>
+							<arg line='/c "luac${luaprefix} -o ${luac.file} ${project.loc}\luasrc\kiosk\startup\rcchannel.lua ${project.loc}\luasrc\kiosk\nongenerated\*.lua ${project.loc}\luasrc\kiosk\generated\*.lua ${project.loc}\luasrc\kiosk\startup\startup.lua"'/>
+
+						</exec>
+				  		
+				        <concat fixlastline="yes" destfile="resources.properties">
+				         	platform.version=${platform.version}
+				         	app.name=${appname}
+				         	app.version=${appversion}
+				         	vendor.name=${vendorname}
+				         	entrypoint=konyapp.o
+				         	appid=${appid}
+				         	logo.id=${logo}
+				         	resources=${resources.list}konyapp.o
+				         	konyapp.o.id=konyapp.o
+				         	konyapp.o.type=1
+				         	resfolder=${basedir}/resources
+				         	locales=${locales}
+				         </concat>
+						
+						<replaceregexp file="resources.properties" match="\\" replace="/" flags="g" />
+						<copy todir="kiosk/resources" overwrite="true">
+				   			<fileset dir="${basedir}/resources" includes="konyapp.o" casesensitive="false"/>
+				   			<fileset dir="${basedir}/resources" includes="*.png,${reslocale.str}" casesensitive="false"/>
+				   			<fileset dir="${basedir}/resources" includes="*.xml" casesensitive="false"/>
+				   			<fileset dir="${basedir}/resources" includes="*.ttf" casesensitive="false"/>
+				   		</copy>
+				   		<copy file="${luac.file}" tofile="${desktop_kioskluac.file}" overwrite="true" /> 
+				   		<delete file ="${luac.file}"/>
+			</then>
+		</if>
+					
+		
+	</target>
+</project>

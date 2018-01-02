@@ -1,0 +1,1338 @@
+<!--@Note: This is read only file and not being used at runtime,if we want to update anything do it in zip file \trunk\guieditor\lib\build.zip -->
+<project name="Kony" basedir="." default="build">
+
+	<target name="buildResources">
+
+		<unset name="logo"/>
+		<var name="logo" value="${logo_ipad}"/>
+		<unset name="splash.image"/>
+		<var name="splash.image" value="${splash.image_ipad}"/>
+
+		<unset name="splash.animation.images"/>
+		<var name="splash.animation.images" value="${splash.animation.images_ipad}"/>
+
+		<unset name="splash.animation.images.landscape"/>
+		<var name="splash.animation.images.landscape" value="${splash.animation.images.landscape_ipad}"/>
+
+
+
+
+		<delete dir="ipad"/>
+		<mkdir dir="ipad"/>
+		<mkdir dir="ipad/temp"/>
+		<delete dir ="resources"/>
+		<mkdir dir="resources"/>
+		<mkdir dir="ipad/resources"/>
+		<mkdir dir="ipad/resources/common"/>
+		<mkdir dir="ipad/resources/ipad"/>
+		<mkdir dir="resources/ipad/raw"/>
+		
+		<echo message="copying mobile/common images"/>
+		<if>
+			<equals arg1="${lprojexitsforios}" arg2="true" />
+			<then>
+				<copy todir="resources/ipad" >
+					<fileset dir="${resfolder}/common" includes="*.*,${reslocale.str}"/>
+					<fileset dir="${resfolder}/tablet/common" includes="*.*,${reslocale.str}"  excludes="raw/**"/>
+					<fileset dir="${i18n.iphone.properties}" excludes="**/*.prop"  />
+
+				</copy>
+			</then>
+			<else>
+				<copy todir="resources/ipad" overwrite="true">
+					<fileset dir="${resfolder}/common" includes="*.*,${reslocale.str}"/>
+					<fileset dir="${resfolder}/tablet/common" includes="*.*,${reslocale.str}"  excludes="raw/**"/>
+					<fileset dir="${i18n.iphone.properties}" includes="**/*.prop" casesensitive="false"/>
+				</copy>
+
+			</else>
+		</if>
+
+
+
+
+		<available file="${fonts_workspace}/iPad" type="dir" property="ipad.workspacefonts.present" />
+		<if>
+			<equals arg1="${ipad.workspacefonts.present}" arg2="true" />
+			<then>
+				<copy todir="resources/ipad" overwrite="true">
+					<fileset dir="${fonts_workspace}/iPad" includes="*.ttf"/>
+				</copy>
+			</then>
+		</if>
+
+		<copy todir="resources/ipad" overwrite="true">
+			<fileset dir="${resfolder}/tablet/native/ipad"  excludes="raw/**" />
+		</copy>
+		
+		<available file="${resfolder}/tablet/common/raw" type="dir" property="raw.common.present"/>
+		<available file="${resfolder}/tablet/native/ipad/raw" type="dir" property="raw.ipad.present"/>
+		
+		<if>
+			<equals arg1="${raw.common.present}" arg2="true"/>
+			<then>
+				<copy todir="resources/ipad/raw" overwrite="true">
+					<fileset dir="${resfolder}/tablet/common/raw"  />
+				</copy>
+			</then>
+		</if>
+		
+		<if>
+			<equals arg1="${raw.ipad.present}" arg2="true"/>
+			<then>
+				<copy todir="resources/ipad/raw" overwrite="true">
+					<fileset dir="${resfolder}/tablet/native/ipad/raw"  />
+				</copy>
+			</then>
+		</if>
+		
+		<for list="${locales}" param="locale.name">
+			<sequential>
+				<unset name="@{locale.name}.present"/>
+				<available file="resources/ipad/@{locale.name}" type="dir" property="@{locale.name}.present"/>
+				<if>
+					<equals arg1="${@{locale.name}.present}" arg2="true"/>
+					<then>
+						<move todir="resources/ipad/@{locale.name}.lproj">
+							<fileset dir="resources/ipad/@{locale.name}"/>
+						</move>
+						<delete dir="resources/ipad/@{locale.name}"/>
+					</then>
+				</if>
+			  	<unset name="${quicki18n.available}"/>
+			  	<available file="../../${outputdir}/quicki18n/@{locale.name}/InfoPlist.strings" type="file" property="quicki18n.available" />
+	  			<if>
+	  				<equals arg1="${quicki18n.available}" arg2="true"/>
+	  				<then>
+	  					<copy todir="resources/ipad/@{locale.name}.lproj">
+	  						<fileset dir="../../${outputdir}/quicki18n/@{locale.name}" includes="InfoPlist.strings"/>
+	  					</copy>
+	  				</then>
+	  			</if>
+			</sequential>
+		</for>
+		
+		<available file="${resfolder}/fonts" type="dir" property="fonts.present" />
+		<if>
+			<equals arg1="${fonts.present}" arg2="true" />
+			<then>
+				<copy todir="resources/ipad" overwrite="true">
+					<fileset dir="${resfolder}/fonts" includes="*.ttf"/>
+				</copy>
+			</then>
+		</if>
+
+		<available file="${resfolder}/fonts/iPad" type="dir" property="ipad.fonts.present" />
+		<if>
+			<equals arg1="${ipad.fonts.present}" arg2="true" />
+			<then>
+				<copy todir="resources/ipad" overwrite="true">
+					<fileset dir="${resfolder}/fonts/iPad" includes="*.ttf"/>
+				</copy>
+			</then>
+		</if>
+
+
+
+		<copy todir="ipad/resources">
+			<fileset dir="resources"/>
+		</copy>
+
+		<delete dir="ipadkbf"/>
+		<mkdir dir="ipadkbf"/>
+		<mkdir dir="ipadkbf/resources"/>
+
+		<!-- platform version starting with 2.6.0 indicates that KBF format changed(image name length restriction removed) -->
+		<concat fixlastline="yes" destfile="resources.properties">
+		platform.version=${platform.version}
+		app.name=${appname}
+		app.version=${appversion}
+		vendor.name=${vendorname}
+		entrypoint=konyapp.o
+		appid=${appid}
+		app.launch.mode=${app.launch.mode}
+		logo.id=${logo}
+		splash.image=${splash.image}
+		splash.video=${splash.video}
+		splash.video.interruptable=${splash.video.interruptable}
+		splash.animation.duration=${splash.animation.duration}
+		splash.animation.images=${splash.animation.images}
+		splash.image.landscape=${splash.image.landscape_ipad}
+		splash.video.landscape=${splash.video.landscape_ipad}
+		splash.video.interruptable.landscape=${splash.video.interruptable.landscape}
+		splash.animation.duration.landscape=${splash.animation.duration.landscape}
+		splash.animation.images.landscape=${splash.animation.images.landscape}
+		splash.loading.indicator=${splash.iphone.li}
+		bundle.identifier=${bundle.identifier}
+		bundle.version=${bundle.version}
+		app.icon.glossyeffect=${app.icon.glossyeffect}
+		app.supportedorientations=${app.supportedorientations}
+		konyapp.o.id=konyapp.o
+		konyapp.o.type=2
+		resfolder=${basedir}/resources
+		platform.lib.charts=${enableCharts2D3DiPhoneiPad}
+		platform.lib.metrics.thirdparty=${enableMetricsiPhoneiPad}
+		usesvideo=${usesvideoforipad}
+		protectenabled=${protectedmodeenabledios}
+		selfsufficientmodules=${selfsufficientmodulesios}
+		enableMobileFirstAPIs=${enablejsbindings}
+		enableCordova=${enableCordova}
+		cordovaglobal=${cordovaglobal}
+		cordovaversion=${cordovaversion}
+		cordovapath=${cordovapath}
+		isMVC=${isMVC}
+		enableawssdk=${enableawssdk}
+		locales=${locales}
+		associated-domains=${universallink}</concat>
+
+		<replaceregexp file="resources.properties" match="\\" replace="/" flags="g" />
+		<copy file="resources.properties" tofile="ipadkbf/application.properties" overwrite="true" />
+
+		<available file="../../${outputdir}/${codedir}/themes/ipad" type="dir" property="ipad.themes"/>
+		<if>
+			<equals arg1="${ipad.themes}" arg2="true"/>
+			<then>
+				<copy todir="ipadkbf/themes/ipad" overwrite="true">
+					<fileset dir="../../${outputdir}/${codedir}/themes/ipad" includes="*.theme"/>
+				</copy>
+			</then>
+		</if>
+		<if>
+			<available file="../../${outputdir}/functionalmodules" type="dir" />
+			<then>
+				<copy todir="ipadkbf/functionalmodules" overwrite="true">
+					<fileset dir="../../${outputdir}/functionalmodules" includes="*.xml"/>
+				</copy>
+			</then>
+		</if>
+		<if>
+			<equals arg1="${dev.language}" arg2="lua"/>
+			<then>
+				<echo message="Generating kbf for ipad..."/>
+				<exec executable="${basedir}/kappgen.bat" failonerror="true" failifexecutionfails="true">
+					<arg value="${kpgenpath}" />
+					<arg value="${log4jpath}" />
+					<arg value="${basedir}/" />
+					<arg value="resources" />
+				</exec>
+				<copy file="${luac.file}" todir="ipadkbf" overwrite="true" />
+				<delete file ="${luac.file}"/>
+				<copy file="konyapp.kbf" tofile="ipadkbf/konyappipad.kbf" overwrite="true" />
+			</then>
+			<else>
+				<echo message="Copying javascript files and theme files."/>
+				<if>
+		 			<equals arg1="${isMVC}" arg2="true" />
+		 			<then>
+		 				<!--copy todir="ipadkbf/javascript/common" overwrite="true">					 
+		 				 	<fileset dir="${project.loc}/jssrc/ipad/default" includes="*.js"/>
+		 				</copy-->
+		 				<copy todir="ipadkbf/javascript/ipad" overwrite="true">
+		 				 	<fileset dir="${project.loc}/jssrc/ipad/require" includes="*/**"/>
+		 				</copy>			
+		 				<copy todir="ipadkbf/javascript/ipad/startup" overwrite="true">					 
+		 					<fileset dir="${project.loc}/jssrc/ipad/startup" includes="*.js"/>
+		 					<fileset dir="${project.loc}/jssrc/ipad/default" includes="*.js"/>
+		 				</copy>
+		 			</then>
+		 			<else>
+		 				<copy todir="ipadkbf/javascript/common" overwrite="true">					 
+		 					<fileset dir="${project.loc}/jssrc/ipad/nongenerated" includes="*.js"/>
+		 				</copy>
+		 				<copy todir="ipadkbf/javascript/ipad/startup" overwrite="true">
+		 					<fileset dir="${project.loc}/jssrc/ipad/generated" includes="*.js"/>
+		 					<fileset dir="${project.loc}/jssrc/ipad/startup" includes="*.js"/>
+		 				</copy>
+		 				<copy todir="ipadkbf/javascript/ipad" overwrite="true">
+		 					<fileset dir="${project.loc}/jssrc/ipad/require" includes="*/**"/>
+		 				</copy>
+		 			</else>
+		 		</if>
+		 	</else>
+		</if>
+
+		<copy todir="ipadkbf/resources">
+			<fileset dir="resources" excludes="*.o"/>
+		</copy>
+
+
+		<if>
+			<available file="${project.loc}/web" type="dir" />
+			<then>
+				<zip destfile="ipadkbf/web.zip" basedir="${project.loc}/web" update="true">
+				</zip>
+			</then>	
+		</if>
+
+
+		<!-- start js custom widgets for iphone-->
+		<if>
+			<equals arg1="${dev.language}" arg2="js"/>
+			<then>
+				<available file="${customwidgets.dir}/ipad" type="dir" property="ipad.js.libs.available" />
+				<if>
+					<equals arg1="${ipad.js.libs.available}" arg2="true"/>
+					<then>
+						<copy todir="ipadkbf/customwidgets">
+							<fileset dir="${customwidgets.dir}/ipad" includes="*.*"/>
+						</copy>
+					</then>
+				</if>
+				<available file="${ios.customwidgets.xml.dir}" type="dir" property="ipad.js.xml.available" />
+				<echo message=" js custom widget xml file available is  ${ipad.js.xml.available}" />
+				<if>
+					<equals arg1="${ipad.js.xml.available}" arg2="true"/>
+					<then>
+						<copy todir="ipadkbf/customwidgets">
+							<fileset dir="${ios.customwidgets.xml.dir}" includes="*.xml"/>
+							<globmapper from="*" to="cwi_*"/>
+						</copy>
+					</then>
+				</if>
+			</then>
+		</if>
+
+
+		<!-- Start : ffi for ipad-->
+		<available file="${ipad.libs.folder}" type="dir" property="ipad.libs.available" />
+		<if>
+			<equals arg1="${ipad.libs.available}" arg2="true"/>
+			<then>
+				<copy todir="ipadkbf">
+					<fileset dir="${ipad.libs.folder}" includes="*.*"/>
+				</copy>
+			</then>
+		</if>
+		
+		<if>
+			<equals arg1="${enableawssdk}" arg2="true"/>
+			<then>
+			<available file="${awssdkfileloc}" property="awssdk.available"/>
+				<if>
+					<equals arg1="${awssdk.available}" arg2="true"/>
+					<then>
+						<copy todir="ipadkbf/cloudsdks">
+							<fileset dir="${project.loc}/cloudsdks"  includes="*.*"/>
+						</copy>					
+ 					</then>
+						<else>
+						<echo message="aws-sdk.js file doesn't exits in you project please import/download AWS SDk." />
+						</else>
+				</if>
+				</then>
+		</if>
+		
+		<!--available file="${ipad.templates.folder}" type="dir" property="ipad.templates.available" />
+		<if>
+			<equals arg1="${ipad.templates.available}" arg2="true"/>
+			<then>
+				<copy todir="ipadkbf">
+					<fileset dir="${ipad.templates.folder}" includes="*.*"/>
+				</copy>
+			</then>
+		</if-->
+
+
+		<available file="${ffi.xml.dir}" type="dir" property="ffi.xml.available" />
+		<if>
+			<equals arg1="${ffi.xml.available}" arg2="true"/>
+			<then>
+				<copy todir="ipadkbf">
+					<fileset dir="${ffi.xml.dir}" includes="*.*"/>
+					<globmapper from="*" to="lua_*"/>
+				</copy>
+			</then>
+		</if>
+		<unset name="ffi.xml.available"/>
+		<available file="${js.ffi.xml.dir}" type="dir" property="ffi.xml.available" />
+		<if>
+			<equals arg1="${ffi.xml.available}" arg2="true"/>
+			<then>
+				<copy todir="ipadkbf" >
+					<fileset dir="${js.ffi.xml.dir}" includes="*.xml"/>
+					<globmapper from="*" to="js_*"/>
+				</copy>
+			</then>
+		</if>
+		<unset name="ffi.xml.available"/>
+		<!-- End : ffi for ipad-->
+
+		<if>
+			<equals arg1="${ipad.secure.build}" arg2="true"/>
+			<then>
+				<available file="${iospolicyinjection.loc}\libKonyMAMPolicy.zip" property="ios.available"/>
+				<if>
+					<equals arg1="${ios.available}" arg2="true"/>
+					<then>
+						<copy todir="ipadkbf">
+							<fileset dir="${iospolicyinjection.loc}" includes="libKonyMAMPolicy.zip"/>
+						</copy>
+					</then>
+				</if>
+			</then>
+		</if>
+
+		<!-- Copy settings.properties  for ipad-->
+		<available file="../../${outputdir}/Settings.properties.xml" type="file" property="setting.properties.xml.available" />
+		<echo message="setting value  ${setting.properties.xml.available}" />
+		<if>
+			<equals arg1="${setting.properties.xml.available}" arg2="true"/>
+			<then>
+				<copy todir="ipadkbf">
+					<fileset dir="../../${outputdir}" includes="Settings.properties.xml"/>
+				</copy>
+			</then>
+		</if>
+		
+		<!-- Copy StaticQuickActions.xml  for iphone-->
+		<available file="../../${outputdir}/StaticQuickActions.xml" type="file" property="StaticQuickActions.xml.available" />
+		<if>
+			<equals arg1="${StaticQuickActions.xml.available}" arg2="true"/>
+			<then>
+				<copy todir="ipadkbf" overwrite="true">
+					<fileset dir="../../${outputdir}" includes="StaticQuickActions.xml"/>
+				</copy>
+			</then>
+		</if>
+
+		<!-- Copy pluginversions.properties for iphone-->
+		<available file="iOS/pluginversions.properties" type="file" property="pluginversion.properties.xml.available" />
+		<echo message="plugin properties  ${pluginversion.properties.xml.available}" />
+		<if>
+			<equals arg1="${pluginversion.properties.xml.available}" arg2="true"/>
+			<then>
+				<copy todir="ipadkbf">
+					<fileset dir="iOS" includes="pluginversions.properties"/>
+				</copy>
+			</then>
+		</if>
+		
+		<!-- Start Copy infoplist_configuration.json file for iphone-->
+		
+		<echo message="infoPlist File location :   ${project.loc}/infoplist_configuration.json" />
+		<available file="${project.loc}/infoplist_configuration.json" type="file" property="infoplist.configuration.available" />
+		<echo message="infoPlist File:  ${infoplist.configuration.available}" />
+		<if>
+			<equals arg1="${infoplist.configuration.available}" arg2="true"/>
+				<then>
+					<copy file="${project.loc}/infoplist_configuration.json" todir="ipadkbf"/>
+				</then>
+		</if>
+					
+		<!-- END Copy infoplist_configuration.json file for iphone-->
+
+	</target>
+	<target name="build">
+
+		<unset name="logo"/>
+		<var name="logo" value="${logo_ipad}"/>
+		<unset name="splash.image"/>
+		<var name="splash.image" value="${splash.image_ipad}"/>
+
+		<unset name="splash.video"/>
+		<var name="splash.video" value="${splash.video_ipad}"/>
+
+		<unset name="splash.animation.images"/>
+		<var name="splash.animation.images" value="${splash.animation.images_ipad}"/>
+
+		<unset name="splash.animation.images.landscape"/>
+		<var name="splash.animation.images.landscape" value="${splash.animation.images.landscape_ipad}"/>
+
+		<delete dir="${codedir}" failonerror="false"/>
+		<mkdir dir="${codedir}"/>
+
+		<if>
+			<equals arg1="${ipad.hybridmode}" arg2="mixed"/>
+			<then>
+				<copy todir="${codedir}" overwrite="true">
+					<fileset dir="../../${outputdir}/${codedir}hybrid/tablet" excludes="startup.lua,tcchannel.lua,rcchannel.lua" casesensitive="false"/>
+				</copy>
+				<if>
+					<equals arg1="${dev.language}" arg2="${codedir}"/>
+					<then>
+						<copy todir="${codedir}" overwrite="true">
+							<fileset dir="../../${outputdir}/${codedir}hybrid" includes="appskins.${codedir}">
+							</fileset>
+						</copy>
+					</then>
+				</if>
+				<available file="../../${outputdir}/${codedir}hybrid/tablet/ipad" type="dir" property="ipadlua.present"/>
+				<if>
+					<equals arg1="${ipadlua.present}" arg2="true" />
+					<then>
+						<copy todir="${codedir}" overwrite="true">
+							<fileset dir="../../${outputdir}/${codedir}hybrid/tablet/ipad" excludes="startup.lua,tcchannel.lua,rcchannel.lua" casesensitive="false"/>
+						</copy>
+					</then>
+				</if>
+			</then>
+			<else>
+				<if>
+					<equals arg1="${ipad.hybridmode}" arg2="native"/>
+					<then>
+						<copy todir="${codedir}" overwrite="true">
+							<fileset dir="../../${outputdir}/${codedir}/tablet" excludes="startup.lua,tcchannel.lua,rcchannel.lua" casesensitive="false"/>
+							<fileset dir="../../${outputdir}/${codedir}" includes="appskins.${codedir}">
+							</fileset>
+							<fileset dir="../../${outputdir}/${codedir}" includes="${project.name}globalsequences.${codedir}">
+							</fileset>
+						</copy>
+						<available file="../../${outputdir}/${codedir}/tablet/ipad" type="dir" property="ipadlua.present"/>
+						<if>
+							<equals arg1="${ipadlua.present}" arg2="true" />
+							<then>
+								<copy todir="${codedir}" overwrite="true">
+									<fileset dir="../../${outputdir}/${codedir}/tablet/ipad" excludes="startup.lua,tcchannel.lua,rcchannel.lua" casesensitive="false"/>
+								</copy>
+							</then>
+						</if>
+					</then>
+					<else>
+						<copy todir="${codedir}" overwrite="true">
+							<fileset dir="../../${outputdir}/${codedir}wrapper/tablet" excludes="startup.lua,tcchannel.lua,rcchannel.lua" casesensitive="false"/>
+							<fileset dir="../../${outputdir}/${codedir}wrapper" includes="appskins.${codedir}">
+							</fileset>
+						</copy>
+						<available file="../../${outputdir}/${codedir}wrapper/tablet/ipad" type="dir" property="wrapperlua.present"/>
+						<if>
+							<equals arg1="${wrapperlua.present}" arg2="true" />
+							<then>
+								<copy todir="${codedir}" overwrite="true">
+									<fileset dir="../../${outputdir}/${codedir}wrapper/tablet/ipad" excludes="startup.lua,tcchannel.lua,rcchannel.lua" casesensitive="false"/>
+								</copy>
+							</then>
+						</if>
+					</else>
+				</if>
+			</else>
+		</if>
+
+		<delete dir="ipad"/>
+		<mkdir dir="ipad"/>
+		<mkdir dir="ipad/temp"/>
+		<delete dir ="resources"/>
+		<mkdir dir="resources"/>
+		<mkdir dir="ipad/resources"/>
+
+		<copy todir="resources" overwrite="true">
+			<fileset dir="${resfolder}/common" includes="*.*,${reslocale.str}"/>
+			<fileset dir="${resfolder}/tablet/common" includes="*.*,${reslocale.str}"/>
+			<fileset dir="${i18n.iphone.properties}" includes="**/*.prop" casesensitive="false"/>
+		</copy>
+
+
+		<!--available file="${fonts_workspace}/iPad" type="dir" property="ipad.workspacefonts.present" /> 
+        <if>
+            <equals arg1="${ipad.workspacefonts.present}" arg2="true" /> 
+            <then>
+                <copy todir="resources" overwrite="true">
+                    <fileset dir="${fonts_workspace}/iPad" includes="*.ttf"/>
+                </copy>
+            </then>
+        </if -->
+
+		<copy todir="resources" overwrite="true">
+			<fileset dir="${resfolder}/tablet/native/ipad"/>
+		</copy>
+
+		<available file="${resfolder}/fonts/tablet/iPad" type="dir" property="ipad.fonts.present" />
+		<if>
+			<equals arg1="${ipad.fonts.present}" arg2="true" />
+			<then>
+				<copy todir="resources" overwrite="true">
+					<fileset dir="${resfolder}/fonts/tablet/iPad" includes="*.ttf"/>
+				</copy>
+			</then>
+		</if>
+
+		<copy todir="ipad/resources">
+			<fileset dir="resources"/>
+		</copy>
+
+
+		<if>
+			<equals arg1="${ipad.hybridmode}" arg2="mixed"/>
+			<then>
+				<condition property="luasrcHybridIpad" value="hybrid/nativeplatforms/ipad" else="ipad">
+					<equals arg1="${dev.language}" arg2="lua"/>
+				</condition>
+				<!--Copy native headers/footers to lua before applying m4 -->
+				<available file="../../${outputdir}/${codedir}hybrid/tablet/native" type="dir" property="hybrid.nativelua.present"/>
+				<if>
+					<equals arg1="${hybrid.nativelua.present}" arg2="true"/>
+					<then>
+						<copy todir="${codedir}" failonerror="false">
+							<fileset dir="../../${outputdir}/${codedir}hybrid/tablet/native">
+							</fileset>
+						</copy>
+					</then>
+				</if>
+				<available file="../../${outputdir}/${codedir}hybrid/tablet/native/ipad" type="dir" property="native.ipadlua.present"/>
+				<if>
+					<equals arg1="${native.ipadlua.present}" arg2="true" />
+					<then>
+						<copy todir="${codedir}" overwrite="true">
+							<fileset dir="../../${outputdir}/${codedir}hybrid/tablet/native/ipad" excludes="startup.lua,tcchannel.lua,rcchannel.lua" casesensitive="false"/>
+						</copy>
+					</then>
+				</if>
+				<createAndCopyToLuasrc dir.name="${luasrcHybridIpad}" m4constant.name="m4ipad" output.lua.dir="${codedir}hybrid" startup.luadir="/tablet"/>
+
+				<if>
+					<equals arg1="${dev.language}" arg2="lua"/>
+					<then>
+						<exec executable="cmd.exe" failonerror="true" failifexecutionfails="true">
+							<env key="PATH" path="${env.PATH};${appfolder}/build/luacompiler"/>
+							<arg line='/c "luac${luaprefix} -o ${luac.file}${_debugluafile} ${project.loc}\luasrc\${luasrcHybridIpad}\startup\rcchannel.lua ${project.loc}\luasrc\${luasrcHybridIpad}\nongenerated\*.lua ${project.loc}\luasrc\${luasrcHybridIpad}\generated\*.lua ${project.loc}\luasrc\${luasrcHybridIpad}\startup\startup.lua"'/>
+						</exec>
+					</then>
+				</if>
+
+				<!--Copy static headers/footers to lua before applying m4 -->
+				<available file="../../${outputdir}/${codedir}hybrid/tablet/static" type="dir" property="hybrid.staticlua.present"/>
+				<if>
+					<equals arg1="${hybrid.staticlua.present}" arg2="true"/>
+					<then>
+						<copy todir="${codedir}" failonerror="false">
+							<fileset dir="../../${outputdir}/${codedir}hybrid/tablet/static">
+							</fileset>
+						</copy>
+					</then>
+				</if>
+				<available file="../../${outputdir}/${codedir}hybrid/static/tablet/ipad" type="dir" property="static.ipadlua.present"/>
+				<if>
+					<equals arg1="${static.ipadlua.present}" arg2="true" />
+					<then>
+						<copy todir="${codedir}" overwrite="true">
+							<fileset dir="../../${outputdir}/${codedir}hybrid/tablet/static/ipad" excludes="startup.lua,tcchannel.lua,rcchannel.lua" casesensitive="false"/>
+						</copy>
+					</then>
+				</if>
+				<createAndCopyToLuasrc dir.name="hybrid/spa/ipad" m4constant.name="m4spaipad" output.lua.dir="${codedir}hybrid"/>
+			</then>
+			<else>
+				<if>
+					<equals arg1="${ipad.hybridmode}" arg2="wrapper"/>
+					<then>
+						<delete dir="ipadwrappertemp"/>
+						<mkdir dir="ipadwrappertemp"/>
+						<delete dir="ipadwrapper"/>
+						<mkdir dir="ipadwrapper"/>
+						<if>
+							<equals arg1="${dev.language}" arg2="lua"/>
+							<then>
+								<copy todir="ipadwrappertemp">
+									<fileset dir="../../output/luawrapper/tablet" includes="globalsinit_native.lua"/>
+								</copy>
+								<exec executable="${basedir}/m4routine.bat" failonerror="true" failifexecutionfails="true">
+									<env key="PATH" path="${env.PATH};${basedir}/m4.exe;${basedir}/regex2.dll;"/>
+									<arg value="ipadwrappertemp"/>
+									<arg value="ipadwrapper"/>
+									<arg value="m4ipad"/>
+								</exec>
+								<delete dir="ipadwrappertemp"/>
+								<copy todir="ipadwrapper">
+									<fileset dir="${project.loc}\luasrc\wrapper\ipad\generated" excludes="globalsinit.lua"/>
+								</copy>
+								<exec executable="cmd.exe" failonerror="true" failifexecutionfails="true">
+									<env key="PATH" path="${env.PATH};${appfolder}/build/luacompiler"/>
+									<arg line='/c "luac${luaprefix} -o ${luac.file}${_debugluafile} ${project.loc}\luasrc\wrapper\ipad\startup\rcchannel.lua ${project.loc}\luasrc\wrapper\ipad\nongenerated\*.lua ipadwrapper\*.lua ${project.loc}\luasrc\wrapper\ipad\startup\startup.lua"'/>
+								</exec>
+							</then>
+							<else>
+								<copy todir="ipadwrappertemp">
+									<fileset dir="../../${outputdir}/jswrapper/tablet" includes="startup_native.js"/>
+								</copy>
+								<exec-script executable="${node.file}" >
+									<arg value="${js.file}"/>
+									<arg value="${basedir}/ipadwrappertemp"/>
+									<arg value="${basedir}/ipadwrapper"/>
+									<arg value="ipad"/>
+									<arg value="${plugin.loc}/preview/node_mac"/>
+								</exec-script>
+								<delete dir="ipadwrappertemp"/>
+								<delete dir="${project.loc}\jssrc\ipad"/>
+								<mkdir dir="${project.loc}\jssrc\ipad"/>
+								<copy todir="${project.loc}\jssrc\ipad">
+									<fileset dir="${project.loc}\jssrc\wrapper\ipad"/>
+								</copy>
+								<delete file="${project.loc}\jssrc\ipad\startup\startup_native.js"/>
+								<delete file="${project.loc}\jssrc\ipad\generated\startup_native.js"/>
+								<copy file="ipadwrapper\startup_native.js" tofile="${project.loc}\jssrc\ipad\startup\startup.js" overwrite="true"/>
+							</else>
+						</if>
+					</then>
+					<else>
+						<createAndCopyToLuasrc dir.name="ipad" m4constant.name="m4ipad" startup.luadir="/tablet"/>
+						<if>
+							<equals arg1="${dev.language}" arg2="lua"/>
+							<then>
+								<exec executable="cmd.exe" failonerror="true" failifexecutionfails="true">
+									<env key="PATH" path="${env.PATH};${appfolder}/build/luacompiler"/>
+									<arg line='/c "luac${luaprefix} -o ${luac.file}${_debugluafile} ${project.loc}\luasrc\ipad\startup\rcchannel.lua ${project.loc}\luasrc\ipad\nongenerated\*.lua ${project.loc}\luasrc\ipad\generated\*.lua ${project.loc}\luasrc\ipad\startup\startup.lua"'/>
+								</exec>
+							</then>
+						</if>
+					</else>
+				</if>
+			</else>
+		</if>
+
+
+		<delete dir="ipadkbf"/>
+		<mkdir dir="ipadkbf"/>
+		<mkdir dir="ipadkbf/resources"/>
+
+		<!-- platform version starting with 2.6.0 indicates that KBF format changed(image name length restriction removed) -->
+		<concat fixlastline="yes" destfile="resources.properties">
+		platform.version=${platform.version}
+		app.name=${appname}
+		app.version=${appversion}
+		vendor.name=${vendorname}
+		entrypoint=konyapp.o
+		appid=${appid}
+		app.launch.mode=${app.launch.mode}
+		logo.id=${logo}
+		splash.image=${splash.image}
+		splash.video=${splash.video}
+		splash.video.interruptable=${splash.video.interruptable}
+		splash.animation.duration=${splash.animation.duration}
+		splash.animation.images=${splash.animation.images}
+		splash.image.landscape=${splash.image.landscape_ipad}
+		splash.video.landscape=${splash.video.landscape_ipad}
+		splash.video.interruptable.landscape=${splash.video.interruptable.landscape}
+		splash.animation.duration.landscape=${splash.animation.duration.landscape}
+		splash.animation.images.landscape=${splash.animation.images.landscape}
+		splash.loading.indicator=${splash.iphone.li}
+		bundle.identifier=${bundle.identifier}
+		bundle.version=${bundle.version}
+		app.icon.glossyeffect=${app.icon.glossyeffect}
+		app.supportedorientations=${app.supportedorientations}
+		konyapp.o.id=konyapp.o
+		konyapp.o.type=2
+		resfolder=${basedir}/resources
+		platform.lib.charts=${enableCharts2D3DiPhoneiPad}
+		platform.lib.metrics.thirdparty=${enableMetricsiPhoneiPad}
+		usesvideo=${usesvideoforipad}
+		protectenabled=${protectedmodeenabledios}
+		selfsufficientmodules=${selfsufficientmodulesios}
+	    enableMobileFirstAPIs=${enablejsbindings}
+		enableCordova=${enableCordova}
+		cordovaglobal=${cordovaglobal}
+		cordovaversion=${cordovaversion}
+		cordovapath=${cordovapath}
+		isMVC=${isMVC}
+		enableawssdk=${enableawssdk}
+		locales=${locales}
+		associated-domains=${universallink}</concat>
+
+		<replaceregexp file="resources.properties" match="\\" replace="/" flags="g" />
+		<copy file="resources.properties" tofile="ipadkbf/application.properties" overwrite="true" />
+
+		<available file="../../${outputdir}/${codedir}/themes/ipad" type="dir" property="ipad.themes"/>
+		<if>
+			<equals arg1="${ipad.themes}" arg2="true"/>
+			<then>
+				<copy todir="ipadkbf/themes" overwrite="true">
+					<fileset dir="../../${outputdir}/${codedir}/themes/ipad" includes="*.theme"/>
+				</copy>
+			</then>
+		</if>
+		<if>
+			<available file="../../${outputdir}/functionalmodules" type="dir" />
+			<then>
+				<copy todir="ipadkbf/functionalmodules" overwrite="true">
+					<fileset dir="../../${outputdir}/functionalmodules" includes="*.xml"/>
+				</copy>
+			</then>
+		</if>
+
+		<if>
+			<equals arg1="${dev.language}" arg2="lua"/>
+			<then>
+				<echo message="Generating kbf for ipad..."/>
+				<exec executable="${basedir}/kappgen.bat" failonerror="true" failifexecutionfails="true">
+					<arg value="${kpgenpath}" />
+					<arg value="${log4jpath}" />
+					<arg value="${basedir}/" />
+					<arg value="resources" />
+				</exec>
+				<copy file="${luac.file}" todir="ipadkbf" overwrite="true" />
+				<delete file ="${luac.file}"/>
+				<copy file="konyapp.kbf" tofile="ipadkbf/konyappipad.kbf" overwrite="true" />
+			</then>
+			<else>
+				<echo message="Copying javascript files and theme files."/>
+				<if>
+					<equals arg1="${isMVC}" arg2="true" />
+					<then>
+					</then>
+					<else> 
+						<copy todir="ipadkbf/javascript" overwrite="true">
+							<fileset dir="${project.loc}/jssrc/ipad/generated" includes="*.js"/>
+							<fileset dir="${project.loc}/jssrc/ipad/nongenerated" includes="*.js"/>
+							<fileset dir="${project.loc}/jssrc/ipad/startup" includes="*.js"/>
+						</copy>
+					</else>
+				</if>
+				<if>
+					<available file="${project.loc}/jssrc/ipad/nongenerated/workerthreads" type="dir" />
+					<then>
+						<copy todir="ipadkbf/workerthreads" overwrite="true">
+							<fileset dir="${project.loc}/jssrc/ipad/nongenerated/workerthreads" includes="*.js"/>
+						</copy>
+					</then>
+				</if>
+				<if>
+					<available file="${project.loc}/jssrc/ipad/workerthreads" type="dir" />
+					<then>
+						<copy todir="ipadkbf/workerthreads" overwrite="true">
+							<fileset dir="${project.loc}/jssrc/ipad/workerthreads" includes="*.js"/>
+						</copy>
+					</then>
+				</if>
+					
+			</else>
+		</if>
+
+		<copy todir="ipadkbf/resources">
+			<fileset dir="resources" excludes="*.o"/>
+		</copy>
+
+		<if>
+			<equals arg1="${lprojexitsforios}" arg2="true" />
+			<then>
+
+			</then>
+			<else>
+				<for list="${locales}" param="locale.name">
+					<sequential>
+						<move todir="ipadkbf/resources/@{locale.name}.lproj">
+							<fileset dir="ipadkbf/resources/@{locale.name}"/>
+						</move>
+						<delete dir="ipadkbf/resources/@{locale.name}"/>
+
+						<move file="ipadkbf/resources/@{locale.name}.prop" tofile="ipadkbf/resources/@{locale.name}.lproj/Localizable.strings"/>
+						<delete file="ipadkbf/resources/@{locale.name}.prop"/>
+					</sequential>
+				</for>
+
+				<echo message="ignoreStringLocales: ${ignoreStringLocales}"/>
+
+				<for list="${ignoreStringLocales}" param="locale.name">
+					<sequential>
+						<echo message="deleting string for  @{locale.name}"/>
+						<delete file="ipadkbf/resources/@{locale.name}.lproj/Localizable.strings"/>
+					</sequential>
+				</for>
+
+			</else>
+		</if>
+
+
+
+		<!-- start js custom widgets for iphone-->
+		<if>
+			<equals arg1="${dev.language}" arg2="js"/>
+			<then>
+				<available file="${customwidgets.dir}/ipad" type="dir" property="ipad.js.libs.available" />
+				<if>
+					<equals arg1="${ipad.js.libs.available}" arg2="true"/>
+					<then>
+						<copy todir="ipadkbf/customwidgets">
+							<fileset dir="${customwidgets.dir}/ipad" includes="*.*"/>
+						</copy>
+					</then>
+				</if>
+				<available file="${ios.customwidgets.xml.dir}" type="dir" property="ipad.js.xml.available" />
+				<echo message=" js custom widget xml file available is  ${ipad.js.xml.available}" />
+				<if>
+					<equals arg1="${ipad.js.xml.available}" arg2="true"/>
+					<then>
+						<copy todir="ipadkbf/customwidgets">
+							<fileset dir="${ios.customwidgets.xml.dir}" includes="*.xml"/>
+							<globmapper from="*" to="cwi_*"/>
+						</copy>
+					</then>
+				</if>
+			</then>
+		</if>
+
+		
+
+		<!-- Start : ffi for ipad-->
+		<available file="${ipad.libs.folder}" type="dir" property="ipad.libs.available" />
+		<if>
+			<equals arg1="${ipad.libs.available}" arg2="true"/>
+			<then>
+				<copy todir="ipadkbf">
+					<fileset dir="${ipad.libs.folder}" includes="*.*"/>
+				</copy>
+			</then>
+		</if>
+		
+		<if>
+			<equals arg1="${enableawssdk}" arg2="true"/>
+			<then>
+			<available file="${awssdkfileloc}" property="awssdk.available"/>
+				<if>
+					<equals arg1="${awssdk.available}" arg2="true"/>
+					<then>
+						<copy todir="ipadkbf/cloudsdks">
+							<fileset dir="${project.loc}/cloudsdks"  includes="*.*"/>
+						</copy>	
+					</then>
+						<else>
+						<echo message="aws-sdk.js file doesn't exits in you project please import/download AWS SDk." />
+						</else>
+				</if>
+				</then>
+		</if>
+		
+		<!--available file="${ipad.templates.folder}" type="dir" property="ipad.templates.available" />
+		<if>
+			<equals arg1="${ipad.templates.available}" arg2="true"/>
+			<then>
+				<copy todir="ipadkbf">
+					<fileset dir="${ipad.templates.folder}" includes="*.*"/>
+				</copy>
+			</then>
+		</if-->
+
+
+		<available file="${ffi.xml.dir}" type="dir" property="ffi.xml.available" />
+		<if>
+			<equals arg1="${ffi.xml.available}" arg2="true"/>
+			<then>
+				<copy todir="ipadkbf">
+					<fileset dir="${ffi.xml.dir}" includes="*.*"/>
+					<globmapper from="*" to="lua_*"/>
+				</copy>
+			</then>
+		</if>
+		<unset name="ffi.xml.available"/>
+		<available file="${js.ffi.xml.dir}" type="dir" property="ffi.xml.available" />
+		<if>
+			<equals arg1="${ffi.xml.available}" arg2="true"/>
+			<then>
+				<copy todir="ipadkbf" >
+					<fileset dir="${js.ffi.xml.dir}" includes="*.*"/>
+					<globmapper from="*" to="js_*"/>
+				</copy>
+			</then>
+		</if>
+		<unset name="ffi.xml.available"/>
+		<!-- End : ffi for ipad-->
+
+		<if>
+			<equals arg1="${ipad.secure.build}" arg2="true"/>
+			<then>
+				<available file="${iospolicyinjection.loc}\libKonyMAMPolicy.zip" property="ios.available"/>
+				<if>
+					<equals arg1="${ios.available}" arg2="true"/>
+					<then>
+						<copy todir="ipadkbf">
+							<fileset dir="${iospolicyinjection.loc}" includes="libKonyMAMPolicy.zip"/>
+						</copy>
+					</then>
+				</if>
+			</then>
+		</if>
+
+		<!-- Copy settings.properties  for ipad-->
+		<available file="../../${outputdir}/Settings.properties.xml" type="file" property="setting.properties.xml.available" />
+		<echo message="setting value  ${setting.properties.xml.available}" />
+		<if>
+			<equals arg1="${setting.properties.xml.available}" arg2="true"/>
+			<then>
+				<copy todir="ipadkbf">
+					<fileset dir="../../${outputdir}" includes="Settings.properties.xml"/>
+				</copy>
+			</then>
+		</if>
+
+
+		<!-- Copy pluginversions.properties for iphone-->
+		<available file="iOS/pluginversions.properties" type="file" property="pluginversion.properties.xml.available" />
+		<echo message="plugin properties  ${pluginversion.properties.xml.available}" />
+		<if>
+			<equals arg1="${pluginversion.properties.xml.available}" arg2="true"/>
+			<then>
+				<copy todir="ipadkbf">
+					<fileset dir="iOS" includes="pluginversions.properties"/>
+				</copy>
+			</then>
+		</if>
+
+	</target>
+
+	<target name="copyjssrc">
+		<echo message="Copying javascript files and theme files."/>
+		
+		<if>
+ 			<equals arg1="${isMVC}" arg2="true" />
+ 			<then>
+ 				<!--copy todir="ipadkbf/javascript/common" overwrite="true">					 
+ 				 	<fileset dir="${project.loc}/jssrc/ipad/nongenerated" includes="*.js"/>
+ 				</copy-->
+ 				<copy todir="ipadkbf/javascript/ipad" overwrite="true">
+ 				 	<fileset dir="${project.loc}/jssrc/ipad/require" includes="*/**"/>
+ 				</copy>			
+ 				<copy todir="ipadkbf/javascript/ipad/startup" overwrite="true">					 
+ 					<fileset dir="${project.loc}/jssrc/ipad/startup" includes="*.js"/>
+ 					<fileset dir="${project.loc}/jssrc/ipad/default" includes="*.js"/>
+ 				</copy>
+ 			</then>
+ 			<else>
+ 				<copy todir="ipadkbf/javascript/common" overwrite="true">					 
+ 					<fileset dir="${project.loc}/jssrc/ipad/nongenerated" includes="*.js"/>
+ 				</copy>
+ 				<copy todir="ipadkbf/javascript/ipad/startup" overwrite="true">
+ 					<fileset dir="${project.loc}/jssrc/ipad/generated" includes="*.js"/>
+ 					<fileset dir="${project.loc}/jssrc/ipad/startup" includes="*.js"/>
+ 				</copy>
+ 				<copy todir="ipadkbf/javascript/ipad" overwrite="true">
+ 					<fileset dir="${project.loc}/jssrc/ipad/require" includes="*/**"/>
+ 				</copy>
+ 			</else>
+ 		</if>
+		
+		<if>
+			 <available file="${project.loc}/jssrc/ipad/nongenerated/workerthreads" type="dir" />
+				 <then>
+						<copy todir="ipadkbf/workerthreads" overwrite="true">
+							<fileset dir="${project.loc}/jssrc/ipad/nongenerated/workerthreads" includes="*.js"/>
+				 		</copy>
+				 </then>
+		 </if>
+		<if>
+			 <available file="${project.loc}/jssrc/ipad/workerthreads" type="dir" />
+				 <then>
+						<copy todir="ipadkbf/workerthreads" overwrite="true">
+							<fileset dir="${project.loc}/jssrc/ipad/workerthreads" includes="*.js"/>
+				 		</copy>
+				 </then>
+		 </if>
+		
+	</target>
+
+	<target name="protectedKAR">
+		<if>
+			<equals arg1="${protectedmodeenabledios}" arg2="true" />
+			<then>
+
+				<delete dir="ipadencryptkar"/>
+				<mkdir dir="ipadencryptkar"/>
+				<mkdir dir="ipadencryptkar/outkeys"/>
+				<mkdir dir="ipadkbf/encryptedkeys"/>
+				<mkdir dir="ipadkbf/encryptedkeys/fin"/>
+
+				<copy todir="ipadencryptkar" overwrite="true">
+					<fileset dir="${workspace.loc}/__encryptionkeys/" casesensitive="false"/>
+				</copy>
+				<copy file="${protectjar.loc}/extlibs/EncryptJS.jar"  todir="ipadencryptkar" overwrite="true"/>
+
+				<echo>protectedKAR</echo>
+				<java jar="ipadencryptkar/EncryptJS.jar" fork="true">
+					<arg line="1"/>
+					<arg line="ipadencryptkar/private_key.pem"/>
+					<arg line="./"/>
+					<arg line="ipadencryptkar/outkeys/"/>
+				</java>
+				<echo>key gen done</echo>
+
+				<copy todir="ipadencryptkar/outkeys" overwrite="true">
+					<fileset dir="${workspace.loc}/__encryptionkeys/" excludes="private_key.pem" casesensitive="false"/>
+				</copy>
+
+				<copy todir="ipadkbf/encryptedkeys" overwrite="true">
+					<fileset dir="ipadencryptkar/outkeys/" excludes="private_key.pem" casesensitive="false"/>
+				</copy>
+
+				<copy todir="ipadkbf/encryptedkeys/fin" overwrite="true">
+					<fileset dir="${workspace.loc}/__encryptionkeys/fin" excludes="private_key.pem" casesensitive="false"/>
+				</copy>
+
+				<delete dir="ipadencryptkar"/>
+			</then>
+		</if>
+	</target>
+
+	<target name="copyssmodules">
+
+		<!--<if>
+		<equals arg1="${enablejsbindings}" arg2="true"/>
+		<then>-->
+		<delete dir="ipadselfsufficientmodules" />
+		<length string="${selfsufficientmodulesiosfilepath}" property="length.ssm" />
+		<if>
+			<equals arg1="${length.ssm}" arg2="0" />
+			<then>
+			</then>
+			<else>
+				<mkdir dir="ipadselfsufficientmodules" />
+				<mkdir dir="ipadkbf/selfsufficientmodules" />
+
+				<for list="${selfsufficientmodulesiosfilepath}" delimiter="," param="val">
+					<sequential>
+						<copy file="@{val}" todir="ipadselfsufficientmodules" overwrite="true" />
+						<echo message="@{val}" />
+					</sequential>
+				</for>
+				<copy todir="ipadkbf/selfsufficientmodules" overwrite="true">
+					<fileset dir="ipadselfsufficientmodules" />
+				</copy>
+				<delete dir="ipadselfsufficientmodules" />
+			</else>
+		</if>
+
+		<!--</then>
+		</if>-->
+
+	</target>
+	
+	<target name="copyappextensions">
+			
+		<echo message="----- -- ${isEnableAppExtensions}" />
+		<!--if>
+		<equals arg1="${isEnableAppExtensions}" arg2="true"/>
+		<then-->
+			<length string="${appExtensions}" property="length.appext" />
+			<if>
+				<equals arg1="${length.appext}" arg2="0" />
+				<then>
+				</then>
+				<else>
+					<mkdir dir="ipadkbf/app-extensions" />
+					<for list="${appExtensions}" delimiter="," param="val">
+						<sequential>
+							<mkdir dir="ipadkbf/app-extensions/@{val}" />
+
+							<available file="${appextBaseFilePath}/@{val}/javascript" type="dir" property="javascript.present"/>
+							<if>
+								<equals arg1="${javascript.present}" arg2="true"/>
+								<then>
+									<mkdir dir="ipadkbf/app-extensions/@{val}/javascript" />
+									<copy todir="ipadkbf/app-extensions/@{val}/javascript" overwrite="true">
+									    <fileset dir="${appextBaseFilePath}/@{val}/javascript" />
+								 	</copy>
+								</then>							
+							</if>
+							
+							<available file="${appextBaseFilePath}/@{val}/resources" type="dir" property="resources.present"/>
+							<if>
+								<equals arg1="${resources.present}" arg2="true"/>
+								<then>
+									<mkdir dir="ipadkbf/app-extensions/@{val}/resources" />
+									<copy todir="ipadkbf/app-extensions/@{val}/resources" overwrite="true">
+										<fileset dir="${appextBaseFilePath}/@{val}/resources" />
+									</copy>
+								</then>							
+							</if>
+							
+							<copy file="${appextBaseFilePath}/@{val}/Info.plist" todir="ipadkbf/app-extensions/@{val}" overwrite="true" />
+							<copy file="${iOSAppExtTempLocation}/@{val}_extensionsnativemodules.json" tofile="ipadkbf/app-extensions/@{val}/extensionsnativemodules.json" overwrite="true" />
+						</sequential>
+					</for>
+				</else>
+			</if>
+		<!--/then>
+		</if-->
+	</target>
+
+	<target name="iPadbuildKAR" depends="copyjssrc,copyssmodules,copyappextensions,protectedKAR,precompile">
+
+		<echo message="Creating ipad kbf KAR file" />
+		<if>
+			<equals arg1="${hybridmode}" arg2="native" />
+			<then>
+			</then>
+			<else>
+				<mkdir dir="ipadkbf/kwebmodules" />
+				<mkdir dir="ipadkbf/tpartywebmodules" />
+				<available file="${appfolder}/${outputdir}/spaipad${hybridmode}" type="dir" property="hybriddir.present" />
+				<if>
+					<equals arg1="${hybriddir.present}" arg2="true" />
+					<then>
+						<copy todir="ipadkbf/kwebmodules">
+							<fileset dir="${appfolder}/${outputdir}/spaipad${hybridmode}" />
+						</copy>
+						<if>
+							<not>
+								<equals arg1="${locales}" arg2=""/>
+							</not>
+							<then>
+								<copy todir="ipadkbf/kwebmodules/resources/strings">
+									<fileset dir="${resfolder}/i18n/iphone_properties" includes="*.prop"/>
+									<mapper type="glob" from="*.prop" to="*.js"/>
+								</copy>
+
+								<replaceregexp match="(.*)" replace="var i18nObject = {\1}" flags="s" byline="false">
+									<fileset dir="ipadkbf/kwebmodules/resources/strings" includes="*.js"/>
+								</replaceregexp>
+
+								<replace dir="ipadkbf/kwebmodules/resources/strings">
+									<include name="*.js"/>
+									<replacefilter token="&quot;=&quot;" value="&quot;:&quot;" />
+									<replacefilter token="&quot;;" value="&quot;,"/>
+								</replace>
+							</then>
+						</if>
+					</then>
+				</if>
+				<copy file="../nativeplatform.js" todir="ipadkbf/kwebmodules/appjs"/>
+				<copy todir="ipadkbf/tpartywebmodules">
+					<fileset dir="${webmodule.loc}"/>
+				</copy>
+				<!-- If not native, then copy spa images also into images folder -->
+				<if>
+					<not>
+						<equals arg1="ipad.hybridmode" arg2="native"/>
+					</not>
+					<then>
+						<mkdir dir="ipadkbf/kwebmodules/images"/>
+						<copy todir="ipadkbf/kwebmodules/images">
+							<fileset dir="ipadkbf/resources"/>
+						</copy>
+						<copy todir="ipadkbf/kwebmodules/images" overwrite="true">
+							<fileset dir="${resfolder}/tablet/web/spaipad"/>
+						</copy>
+					</then>
+				</if>
+			</else>
+		</if>
+		<zip destfile="${basedir}/ipadkbf/konyappipad.KAR" update="true" basedir="${basedir}/ipadkbf" excludes="konyappipad.KAR"/>
+		<available file="${basedir}/ipadkbf" type="dir" property="ipadKAR.present"/>
+		<if>
+			<equals arg1="${ipadKAR.present}"  arg2="true"/>
+			<then>
+				<copy todir="${jetty.web}r/kbf" overwrite="true">
+					<fileset dir="${basedir}/ipadkbf" includes="*.KAR,*.kbf"/>
+				</copy>
+			</then>
+		</if>
+	</target>
+
+		<target name="precompile">
+		<!--Any application related setup can be done using this task prior to actual compilation
+			(Ex: Copying a modified Main Activity file,adding additional project.properties)-->
+		<if>
+			<available file="${resfolder}/../iosprecompiletask.xml" />
+			<then>
+				<ant antfile="iosprecompiletask.xml" dir="${resfolder}/../">
+					<property name="app.dir" value="${basedir}/ipadkbf" />
+					<property name="isMobileBuild" value="false" />
+				</ant>
+			</then>
+			<else>
+				<echo>No precompile task present</echo>
+			</else>
+		</if>
+	</target>
+	
+	<target name="nativeipad">
+
+		<echo message="Creating ipad KAR file for native code.." />
+		<delete dir="kbf"/>
+		<mkdir dir="kbf"/>
+		<mkdir dir="kbf/codegen"/>
+
+		<copy todir="kbf">
+			<fileset dir="ipad/resources"/>
+		</copy>
+
+		<unset name="logo"/>
+		<var name="logo" value="${logo_ipad}"/>
+		<unset name="splash.image"/>
+		<var name="splash.image" value="${splash.image_ipad}"/>
+		<unset name="splash.video"/>
+		<var name="splash.video" value="${splash.video_ipad}"/>
+
+
+
+		<if>
+			<equals arg1="${lprojexitsforios}" arg2="true" />
+			<then>
+
+			</then>
+			<else>
+				<for list="${locales}" param="locale.name">
+					<sequential>
+						<move todir="kbf/@{locale.name}.lproj">
+							<fileset dir="kbf/@{locale.name}"/>
+						</move>
+						<delete dir="kbf/@{locale.name}"/>
+
+						<move file="kbf/@{locale.name}.prop" tofile="kbf/@{locale.name}.lproj/Localizable.strings"/>
+						<delete file="kbf/@{locale.name}.prop"/>
+					</sequential>
+				</for>
+
+				<echo message="ignoreStringLocales: ${ignoreStringLocales}"/>
+
+				<for list="${ignoreStringLocales}" param="locale.name">
+					<sequential>
+						<echo message="deleting string for  @{locale.name}"/>
+						<delete file="kbf/@{locale.name}.lproj/Localizable.strings"/>
+					</sequential>
+				</for>
+			</else>
+		</if>
+
+
+
+		<concat fixlastline="yes" destfile="kbf/application.properties">
+		platform.version=3.1.0.${build}
+		app.name=${appname}
+		app.version=${appversion}
+		vendor.name=${vendorname}
+		entrypoint=konyapp.o
+		appid=${appid}
+		app.launch.mode=${app.launch.mode}
+		logo.id=${logo}
+		splash.image=${splash.image}
+		splash.video=${splash.video}
+		splash.video.interruptable=${splash.video.interruptable}
+		splash.animation.duration=${splash.animation.duration}
+		splash.animation.images=${splash.animation.images}
+		splash.image.landscape=${splash.image.landscape_ipad}
+		splash.video.landscape=${splash.video.landscape_ipad}
+		splash.video.interruptable.landscape=${splash.video.interruptable.landscape}
+		splash.animation.duration.landscape=${splash.animation.duration.landscape}
+		splash.animation.images.landscape=${splash.animation.images.landscape}
+		splash.loading.indicator=${splash.iphone.li}
+		bundle.identifier=${bundle.identifier}
+		bundle.version=${bundle.version}
+		app.icon.glossyeffect=${app.icon.glossyeffect}
+		app.supportedorientations=${app.supportedorientations}
+		konyapp.o.id=konyapp.o
+		konyapp.o.type=2
+		resfolder=${basedir}/resources
+		enableCordova=${enableCordova}
+		cordovaglobal=${cordovaglobal}
+		cordovaversion=${cordovaversion}
+		cordovapath=${cordovapath}
+		enableawssdk=${enableawssdk}
+		locales=${iphonelocales}
+		associated-domains=${universallink}</concat>
+
+		<replaceregexp file="kbf/application.properties" match="\\" replace="/" flags="g" />
+
+		<copy todir="kbf/codegen" overwrite="true">
+			<fileset dir="ipadnative" includes="*.*"/>
+		</copy>
+
+		<zip destfile="${basedir}/kbf/konyappipad.KAR" update="false" basedir="${basedir}/kbf">
+		</zip>
+
+		<available file="${basedir}/kbf" type="dir" property="kbf.present"/>
+		<if>
+			<equals arg1="${kbf.present}"  arg2="true"/>
+			<then>
+				<copy todir="${jetty.web}r/kbf" overwrite="true">
+					<fileset dir="${basedir}/kbf" includes="konyappipad.KAR"/>
+				</copy>
+			</then>
+		</if>
+	</target>
+</project>

@@ -1,0 +1,2887 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<project name="KonyEditorPlugin" basedir="." default="all">
+
+	<target name="commoninit">
+		<taskdef resource="net/sf/antcontrib/antcontrib.properties">
+			<classpath>
+				<pathelement location="${plugin.loc}/lib/ant-contrib-0.6.jar"/>
+			</classpath>
+		</taskdef>
+		<taskdef resource="com/kony/ant/antkonyscript.properties">
+			<classpath>
+				<pathelement location="${plugin.loc}/lib/KonyAntScript.jar"/>
+			</classpath>
+		</taskdef>
+		<osfamily property="os.family"/>
+		<if>
+			<not>
+				<equals arg1="${os.family}" arg2="windows"/>
+			</not>
+			<then>
+				<exec-shell executable="cmd">
+					<arg line='/c "chmod 777 ${plugin.loc}/preview/node_mac/bin/node"'/>
+				</exec-shell>
+			</then>
+		</if>
+	</target>
+
+	<target name="init" depends="commoninit">
+
+		<property name="build.file" value="${plugin.loc}/lib/build.zip"/>
+		<property name="bb.build.file" value="${bb.plugin.loc}/luaj2me"/>
+		<property name="bb10.build.file" value="${bb10.plugin.loc}/bb10"/>
+		<property name="android.build.file" value="${android.plugin.loc}/luaandroid"/>
+		<property name="tabrcandroid.build.file" value="${tabrcandroid.plugin.loc}/luatabrcandroid"/>
+		<property name="brew.build.file" value="${brew.plugin.loc}/luabrew"/>
+		<property name="palm.build.file" value="${palm.plugin.loc}/luapalm"/>
+		<property name="winmobile.build.file" value="${winmobile.plugin.loc}/luawinmobile"/>
+		<property name="winphone8.build.file" value="${winphone8.plugin.loc}/winphone8"/>
+		<property name="windows8.build.file" value="${windows8.plugin.loc}/windows8"/>
+		<property name="windows10.build.file" value="${windows10.plugin.loc}/windows10"/>
+		<property name="winmobile6x.build.file" value="${winmobile6x.plugin.loc}/luawinmobile6x"/>
+		<property name="windowsdesktop.build.file" value="${windowsdesktop.plugin.loc}/luawindows"/>
+		<property name="spa.build.file" value="${spa.plugin.loc}"/>
+		<property name="tc.build.file" value="${tc.plugin.loc}/tc"/>
+		<property name="webcommons.build.file" value="${webcommons.plugin.loc}/common"/>
+		<property name="desktopweb.build.file" value="${desktopweb.plugin.loc}/tc"/>
+		<property name="qt.build.file" value="${qt.plugin.loc}/luaqt"/>
+		<property name="bb.version"  value="false"/>
+		<property name="android.version"  value="false"/>
+		<property name="tabrcandroid.version"  value="false"/>
+		<property name="palm.version"  value="false"/>
+		<property name="winmobile.version"  value="false"/>
+		<property name="winphone8.version"  value="false"/>
+		<property name="windows8.version"  value="false"/>
+		<property name="winmobile6x.version"  value="false"/>
+		<property name="windowsdesktop.version"  value="false"/>
+		<property name="brew.version"  value="false"/>
+		<property name="qt.version"  value="false"/>
+
+		<condition property="bb.set" value="true">
+			<equals arg1="${bb}" arg2="true"/>
+		</condition>
+		<condition property="brew.set" value="true">
+			<equals arg1="${brew}" arg2="true"/>
+		</condition>
+		<condition property="android.set" value="true">
+			<equals arg1="${android}" arg2="true"/>
+		</condition>
+		<condition property="tabrcandroid.set" value="true">
+			<equals arg1="${tabrcandroid}" arg2="true"/>
+		</condition>
+		<condition property="palm.set" value="true">
+			<equals arg1="${palm}" arg2="true"/>
+		</condition>
+		<condition property="winmobile.set" value="true">
+			<equals arg1="${winmobile}" arg2="true"/>
+		</condition>
+		<condition property="winphone8.set" value="true">
+			<equals arg1="${winphone8}" arg2="true"/>
+		</condition>
+		<condition property="winphone81s.set" value="true">
+			<equals arg1="${winphone81s}" arg2="true"/>
+		</condition>
+		<condition property="winphone10.set" value="true">
+			<equals arg1="${winphone10}" arg2="true"/>
+		</condition>
+		<condition property="windows8.set" value="true">
+			<equals arg1="${windows8}" arg2="true"/>
+		</condition>
+		<condition property="windows10.set" value="true">
+			<equals arg1="${windows10}" arg2="true"/>
+		</condition>
+		<condition property="winmobile6x.set" value="true">
+			<equals arg1="${winmobile6x}" arg2="true"/>
+		</condition>
+
+		<condition property="windowsdesktop.set" value="true">
+			<equals arg1="${desktop_kiosk}" arg2="true"/>
+		</condition>
+
+
+
+		<condition property="symbian.set" value="true">
+			<equals arg1="${symbian}" arg2="true"/>
+		</condition>
+		<condition property="tc.set" value="true">
+			<equals arg1="${tc}" arg2="true"/>
+		</condition>
+		<condition property="desktopweb.set" value="true">
+			<equals arg1="${desktopweb}" arg2="true"/>
+		</condition>
+		<condition property="webcommon.set" value="true">
+			<or>
+				<equals arg1="${tc}" arg2="true"/>
+				<equals arg1="${desktopweb}" arg2="true"/>
+			</or>
+		</condition>
+		<condition property="bb10.set" value="true">
+			<equals arg1="${spahybridbb}" arg2="true"/>
+		</condition>
+		<condition property="bb10.set" value="true">
+			<equals arg1="${bb10}" arg2="true"/>
+		</condition>
+		<condition property="bbj2me.set" value="true">
+			<or>
+				<equals arg1="${bb}" arg2="true"/>
+				<equals arg1="${j2me}" arg2="true"/>
+			</or>
+		</condition>
+	</target>
+
+	<target name="unzip" unless="newversion">
+		<if>
+			<AND>
+			<equals arg1="${android.isIncrementalBuild}" arg2="false" />
+			<equals arg1="${androidTab.isIncrementalBuild}" arg2="false" />
+			</AND>
+			<then>
+				<touch file ="build.lock"/>
+				<!-- create a lock file to keep track if the extraction of build file was fine or not-->
+				<echo message="Refreshing build directory"/>
+				<unzip src="${build.file}" dest="."/>
+
+		<!--   <property name="pluginpath" location="${plugin.loc}"/>
+	   	  <replace file="build/server/build.xml" token="lib" value="${pluginpath}/lib"/>
+	   	   <replace file="build/server/build.xml" token="warpath" value="${pluginpath}/middleware"/>
+	   	   <replace file="build/server/middleware/WEB-INF/web.xml" token="actualpath" value="${pluginpath}/middleware"/>	   	   
+	   	   <copydir src="build/server/" dest="${pluginpath}"/> -->
+
+				<delete file ="build.lock"/>
+		<!-- delete this file after successful unzipping. -->
+				</then>
+			</if>
+	</target>
+
+	<target name="checkversion">
+		<available file="201710061811.txt" property="newversion" value="false"/>
+		<available file="build.lock" property="newversion" value="false"/>
+		<!--  mark it as new version even if this file there. If this file is ther that means the deletion of the build directory didnt happen correctly hence we need to start all over again -->
+	</target>
+
+	<target name="createversionfile" unless="${newversion}">
+		<!-- Create the file if the ${newversion} property is not set -->
+		<touch file="201710061811.txt"/>
+	</target>
+
+	<target name="windowsdesktopbuild" if="windowsdesktop.set">
+		<property name="windowsdesktop.version.file"  value="false"/>
+		<property name="version.txt.file"  value="false"/>
+		<property name="build.lock"  value="false"/>
+
+		<available file="${basedir}/build/luawindows/${windowsdesktop.version}.txt" property="windowsdesktop.version.file" value="true"/>
+		<available file="201710061811.txt" property="version.txt.file" value="true"/>
+		<available file="build.lock" property="build.lock" value="true"/>
+
+		<echo message="windowsdesktop.version : ${windowsdesktop.version}"/>
+		<echo message="windowsdesktop.version.file : ${windowsdesktop.version.file}"/>
+		<echo message="windowsdesktop.build.file : ${windowsdesktop.build.file}"/>
+		<echo message="windowsdesktop.available : ${windowsdesktop.available}"/>
+		<echo message="version.txt.file : ${version.txt.file}"/>
+		<echo message="build.lock : ${build.lock}"/>
+		<echo message="WindowsDesktopSET ${windowsdesktop.set}">
+		</echo>
+		<if>
+			<equals arg1="${windowsdesktop.available}" arg2="false"/>
+			<then>
+				<echo message= "Windows Desktop plugin is not avaliable or disabled"/>
+			</then>
+			<elseif>
+				<and>
+					<equals arg1="${windowsdesktop.version.file}" arg2="false"/>
+					<equals arg1="${version.txt.file}" arg2="true"/>
+					<equals arg1="${build.lock}" arg2="false"/>
+					<equals arg1="${windowsdesktop.set}" arg2="true"/>
+				</and>
+				<then>
+					<delete dir ="${basedir}/build/luawindows"/>
+					<mkdir dir="${basedir}/build/luawindows"/>
+					<copy todir="${basedir}/build/luawindows" overwrite="true">
+						<fileset dir="${windowsdesktop.build.file}"/>
+					</copy>
+				</then>
+			</elseif>
+		</if>
+	</target>
+
+
+	<target name="bbbuild" if="bbj2me.set">
+		<property name="bb.version.file"  value="false"/>
+		<property name="version.txt.file"  value="false"/>
+		<property name="build.lock"  value="false"/>
+
+		<available file="${basedir}/build/luaj2me/${bb.version}.txt" property="bb.version.file" value="true"/>
+		<available file="201710061811.txt" property="version.txt.file" value="true"/>
+		<available file="build.lock" property="build.lock" value="true"/>
+
+		<echo message="bb.version : ${bb.version}"/>
+		<echo message="bb.version.file : ${bb.version.file}"/>
+		<echo message="bb.build.file : ${bb.build.file}"/>
+		<echo message="bb.available : ${bb.available}"/>
+		<echo message="version.txt.file : ${version.txt.file}"/>
+		<echo message="build.lock : ${build.lock}"/>
+		<echo message="BBJ2MESET ${bbj2me.set}">
+		</echo>
+		<if>
+			<equals arg1="${bb.available}" arg2="false"/>
+			<then>
+				<echo message= "blackberry plugin is not avaliable or disabled"/>
+			</then>
+			<elseif>
+				<and>
+					<equals arg1="${bb.version.file}" arg2="false"/>
+					<equals arg1="${version.txt.file}" arg2="true"/>
+					<equals arg1="${build.lock}" arg2="false"/>
+					<equals arg1="${bbj2me.set}" arg2="true"/>
+				</and>
+				<then>
+					<delete dir ="${basedir}/build/luaj2me"/>
+					<mkdir dir="${basedir}/build/luaj2me"/>
+					<copy todir="${basedir}/build/luaj2me" overwrite="true">
+						<fileset dir="${bb.build.file}"/>
+					</copy>
+					<if>
+						<equals arg1="${bbcodeinjection.available}" arg2="true"/>
+						<then>
+							<copy todir="${basedir}/build/luaj2me/blackberry/securebuild" failonerror="false">
+								<fileset dir="${bbcodeinjection.plugin.loc}/securebuild"/>
+							</copy>
+							<copy todir="${basedir}/build/luaj2me/blackberry" failonerror="false">
+								<fileset dir="${bbcodeinjection.plugin.loc}" includes="code_injection_build.xml"/>
+							</copy>
+							<copy todir="${basedir}/build/luaj2me/blackberry47/securebuild" failonerror="false">
+								<fileset dir="${bbcodeinjection.plugin.loc}/securebuild"/>
+							</copy>
+							<copy todir="${basedir}/build/luaj2me/blackberry47" failonerror="false">
+								<fileset dir="${bbcodeinjection.plugin.loc}" includes="code_injection_build.xml"/>
+							</copy>
+						</then>
+					</if>
+				</then>
+			</elseif>
+		</if>
+	</target>
+
+	<target name="bb10build" if="bb10.set">
+		<property name="bb10.version.file"  value="false"/>
+		<property name="version.txt.file"  value="false"/>
+		<property name="build.lock"  value="false"/>
+
+		<available file="${basedir}/build/bb10/${bb10.version}.txt" property="bb10.version.file" value="true"/>
+		<available file="201710061811.txt" property="version.txt.file" value="true"/>
+		<available file="build.lock" property="build.lock" value="true"/>
+
+		<echo message="bb10.version : ${bb10.version}"/>
+		<echo message="bb10.version.file : ${bb10.version.file}"/>
+		<echo message="bb10.build.file : ${bb10.build.file}"/>
+		<echo message="bb10.available : ${bb10.available}"/>
+		<echo message="version.txt.file : ${version.txt.file}"/>
+		<echo message="build.lock : ${build.lock}"/>
+		<echo message="BB10SET ${bb10.set}">
+		</echo>
+		<if>
+			<equals arg1="${bb10.available}" arg2="false"/>
+			<then>
+				<echo message= "blackberry plugin is not avaliable or disabled"/>
+			</then>
+			<elseif>
+				<and>
+					<equals arg1="${bb10.version.file}" arg2="false"/>
+					 <equals arg1="${bb10.set}" arg2="true"/>
+				</and>
+				<then>
+					<delete dir ="${basedir}/build/bb10"/>
+					<mkdir dir="${basedir}/build/bb10"/>
+					<copy todir="${basedir}/build/bb10" overwrite="true">
+						<fileset dir="${bb10.build.file}"/>
+					</copy>
+				</then>
+			</elseif>
+		</if>
+	</target>
+
+	<target name="brewbuild" if="brew.set">
+		<property name="brew.version.file"  value="false"/>
+		<property name="version.txt.file"  value="false"/>
+		<property name="build.lock"  value="false"/>
+
+		<available file="${basedir}/build/luabrew/${brew.version}.txt" property="brew.version.file" value="true"/>
+		<available file="201710061811.txt" property="version.txt.file" value="true"/>
+		<available file="build.lock" property="build.lock" value="true"/>
+
+		<echo message="brew.version : ${brew.version}"/>
+		<echo message="brew.version.file : ${brew.version.file}"/>
+		<echo message="brew.build.file : ${brew.build.file}"/>
+		<echo message="brew.available : ${brew.available}"/>
+		<echo message="version.txt.file : ${version.txt.file}"/>
+		<echo message="build.lock : ${build.lock}"/>
+
+		<if>
+			<equals arg1="${brew.available}" arg2="false"/>
+			<then>
+				<echo message= "brew plugin is not avaliable or disabled"/>
+			</then>
+			<elseif>
+				<and>
+					<equals arg1="${brew.version.file}" arg2="false"/>
+					<equals arg1="${version.txt.file}" arg2="true"/>
+					<equals arg1="${build.lock}" arg2="false"/>
+					<equals arg1="${brew}" arg2="true"/>
+				</and>
+				<then>
+					<delete dir ="${basedir}/build/luabrew"/>
+					<mkdir dir="${basedir}/build/luabrew"/>
+					<copy todir="${basedir}/build/luabrew" overwrite="true">
+						<fileset dir="${brew.build.file}"/>
+					</copy>
+				</then>
+			</elseif>
+		</if>
+	</target>
+
+	<target name="androidbuild" if="android.set">
+		<property name="android.version.file"  value="false"/>
+		<property name="version.txt.file"  value="false"/>
+		<property name="build.lock"  value="false"/>
+
+		<available file="${basedir}/build/luaandroid/${android.version}.txt" property="android.version.file" value="true"/>
+		<available file="201710061811.txt" property="version.txt.file" value="true"/>
+		<available file="build.lock" property="build.lock" value="true"/>
+
+		<echo message="android.version : ${android.version}"/>
+		<echo message="android.version.file : ${android.version.file}"/>
+		<echo message="android.build.file : ${android.build.file}"/>
+		<echo message="android.available : ${android.available}"/>
+		<echo message="version.txt.file : ${version.txt.file}"/>
+		<echo message="build.lock : ${build.lock}"/>
+		<if>
+			<equals arg1="${android.available}" arg2="false"/>
+			<then>
+				<echo message= "android plugin is not avaliable or disabled"/>
+			</then>
+			<elseif>
+				<and>
+					<equals arg1="${android.version.file}" arg2="false"/>
+					<equals arg1="${version.txt.file}" arg2="true"/>
+					<equals arg1="${build.lock}" arg2="false"/>
+					<equals arg1="${android}" arg2="true"/>
+					<equals arg1="${android.isIncrementalBuild}" arg2="false" />
+				</and>
+				<then>
+					<delete dir ="${basedir}/build/luaandroid"/>
+					<mkdir dir="${basedir}/build/luaandroid"/>
+					<copy todir="${basedir}/build/luaandroid" overwrite="true">
+						<fileset dir="${android.build.file}"/>
+					</copy>
+					<if>
+						<equals arg1="${andcodeinjection.available}" arg2="true"/>
+						<then>
+							<mkdir dir="${basedir}/build/luaandroid/policyinjection"/>
+							<copy todir="${basedir}/build/luaandroid/policyinjection" failonerror="false">
+								<fileset dir="${andcodeinjection.plugin.loc}/policyinjection"/>
+							</copy>
+						</then>
+					</if>
+				</then>
+			</elseif>
+		</if>
+	</target>
+
+	<target name="tabrcandroidbuild" if="tabrcandroid.set">
+		<property name="tabrcandroid.version.file"  value="false"/>
+		<property name="version.txt.file"  value="false"/>
+		<property name="build.lock"  value="false"/>
+
+		<available file="${basedir}/build/luatabrcandroid/${tabrcandroid.version}.txt" property="tabrcandroid.version.file" value="true"/>
+		<available file="201710061811.txt" property="version.txt.file" value="true"/>
+		<available file="build.lock" property="build.lock" value="true"/>
+
+		<echo message="tabrcandroid.version : ${tabrcandroid.version}"/>
+		<echo message="tabrcandroid.version.file : ${tabrcandroid.version.file}"/>
+		<echo message="tabrcandroid.build.file : ${tabrcandroid.build.file}"/>
+		<echo message="tabrcandroid.available : ${tabrcandroid.available}"/>
+		<echo message="version.txt.file : ${version.txt.file}"/>
+		<echo message="build.lock : ${build.lock}"/>
+
+		<if>
+			<equals arg1="${tabrcandroid.available}" arg2="false"/>
+			<then>
+				<echo message= "tabrcandroid plugin is not avaliable or disabled"/>
+			</then>
+			<elseif>
+				<and>
+					<equals arg1="${tabrcandroid.version.file}" arg2="false"/>
+					<equals arg1="${version.txt.file}" arg2="true"/>
+					<equals arg1="${build.lock}" arg2="false"/>
+					<equals arg1="${tabrcandroid}" arg2="true"/>
+					<equals arg1="${androidTab.isIncrementalBuild}" arg2="false" />
+				</and>
+				<then>
+					<delete dir ="${basedir}/build/luatabrcandroid"/>
+					<mkdir dir="${basedir}/build/luatabrcandroid"/>
+					<copy todir="${basedir}/build/luatabrcandroid" overwrite="true">
+						<fileset dir="${tabrcandroid.build.file}"/>
+					</copy>
+				</then>
+			</elseif>
+		</if>
+	</target>
+
+
+	<target name="palmbuild" if="palm.set">
+		<property name="palm.version.file"  value="false"/>
+		<property name="version.txt.file"  value="false"/>
+		<property name="build.lock"  value="false"/>
+
+		<available file="${basedir}/build/luapalm/${palm.version}.txt" property="palm.version.file" value="true"/>
+		<available file="201710061811.txt" property="version.txt.file" value="true"/>
+		<available file="build.lock" property="build.lock" value="true"/>
+
+		<echo message="palm.version : ${palm.version}"/>
+		<echo message="palm.version.file : ${palm.version.file}"/>
+		<echo message="palm.build.file : ${palm.build.file}"/>
+		<echo message="palm.available : ${palm.available}"/>
+		<echo message="version.txt.file : ${version.txt.file}"/>
+		<echo message="build.lock : ${build.lock}"/>
+
+		<if>
+			<equals arg1="${palm.available}" arg2="false"/>
+			<then>
+				<echo message= "palm plugin is not avaliable or disabled"/>
+			</then>
+			<elseif>
+				<and>
+					<equals arg1="${palm.version.file}" arg2="false"/>
+					<equals arg1="${version.txt.file}" arg2="true"/>
+					<equals arg1="${build.lock}" arg2="false"/>
+					<equals arg1="${palm}" arg2="true"/>
+				</and>
+				<then>
+					<delete dir ="${basedir}/build/luapalm"/>
+					<mkdir dir="${basedir}/build/luapalm"/>
+					<copy todir="${basedir}/build/luapalm" overwrite="true">
+						<fileset dir="${palm.build.file}"/>
+					</copy>
+				</then>
+			</elseif>
+		</if>
+	</target>
+
+	<target name="winmobilebuild" if="winmobile.set">
+		<property name="winmobile.version.file"  value="false"/>
+		<property name="version.txt.file"  value="false"/>
+		<property name="build.lock"  value="false"/>
+
+		<available file="${basedir}/build/luawinmobile/${winmobile.version}.txt" property="winmobile.version.file" value="true"/>
+		<available file="201710061811.txt" property="version.txt.file" value="true"/>
+		<available file="build.lock" property="build.lock" value="true"/>
+
+		<echo message="winmobile.version : ${winmobile.version}"/>
+		<echo message="winmobile.version.file : ${winmobile.version.file}"/>
+		<echo message="winmobile.build.file : ${winmobile.build.file}"/>
+		<echo message="winmobile.available : ${winmobile.available}"/>
+		<echo message="version.txt.file : ${version.txt.file}"/>
+		<echo message="build.lock : ${build.lock}"/>
+
+		<if>
+			<equals arg1="${winmobile.available}" arg2="false"/>
+			<then>
+				<echo message= "winmobile plugin is not avaliable or disabled"/>
+			</then>
+			<elseif>
+				<and>
+					<equals arg1="${winmobile.version.file}" arg2="false"/>
+					<equals arg1="${version.txt.file}" arg2="true"/>
+					<equals arg1="${build.lock}" arg2="false"/>
+					<equals arg1="${winmobile}" arg2="true"/>
+				</and>
+				<then>
+					<delete dir ="${basedir}/build/luawinmobile"/>
+					<mkdir dir="${basedir}/build/luawinmobile"/>
+					<copy todir="${basedir}/build/luawinmobile" overwrite="true">
+						<fileset dir="${winmobile.build.file}"/>
+					</copy>
+				</then>
+			</elseif>
+		</if>
+	</target>
+
+	<target name="winphone8build" if="winphone8.set">
+		<property name="winphone8.version.file"  value="false"/>
+		<property name="version.txt.file"  value="false"/>
+		<property name="build.lock"  value="false"/>
+
+		<available file="${basedir}/build/winphone8/${winphone8.version}.txt" property="winphone8.version.file" value="true"/>
+		<available file="201710061811.txt" property="version.txt.file" value="true"/>
+		<available file="build.lock" property="build.lock" value="true"/>
+
+		<echo message="winphone8.version : ${winphone8.version}"/>
+		<echo message="winphone8.version.file : ${winphone8.version.file}"/>
+		<echo message="winphone8.build.file : ${winphone8.build.file}"/>
+		<echo message="winphone8.available : ${winphone8.available}"/>
+		<echo message="version.txt.file : ${version.txt.file}"/>
+		<echo message="build.lock : ${build.lock}"/>
+
+		<if>
+			<equals arg1="${winphone8.available}" arg2="false"/>
+			<then>
+				<echo message= "winphone8 plugin is not avaliable or disabled"/>
+			</then>
+			<elseif>
+				<and>
+					<equals arg1="${winphone8.version.file}" arg2="false"/>
+					<equals arg1="${version.txt.file}" arg2="true"/>
+					<equals arg1="${build.lock}" arg2="false"/>
+					<equals arg1="${winphone8}" arg2="true"/>
+				</and>
+				<then>
+					<delete dir ="${basedir}/build/winphone8"/>
+					<mkdir dir="${basedir}/build/winphone8"/>
+					<copy todir="${basedir}/build/winphone8" overwrite="true">
+						<fileset dir="${winphone8.build.file}"/>
+					</copy>
+				</then>
+			</elseif>
+		</if>
+	</target>
+
+
+
+	<target name="winphone81sbuild" if="winphone81s.set">
+		<property name="winphone8.version.file"  value="false"/>
+		<property name="version.txt.file"  value="false"/>
+		<property name="build.lock"  value="false"/>
+
+		<available file="${basedir}/build/winphone8/${winphone8.version}.txt" property="winphone8.version.file" value="true"/>
+		<available file="201710061811.txt" property="version.txt.file" value="true"/>
+		<available file="build.lock" property="build.lock" value="true"/>
+
+		<echo message="winphone8.version : ${winphone8.version}"/>
+		<echo message="winphone8.version.file : ${winphone8.version.file}"/>
+		<echo message="winphone8.build.file : ${winphone8.build.file}"/>
+		<echo message="winphone8.available : ${winphone8.available}"/>
+		<echo message="version.txt.file : ${version.txt.file}"/>
+		<echo message="build.lock : ${build.lock}"/>
+
+		<if>
+			<equals arg1="${winphone81s.available}" arg2="false"/>
+			<then>
+				<echo message= "winphone81s plugin is not avaliable or disabled"/>
+			</then>
+			<elseif>
+				<and>
+					<equals arg1="${winphone8.version.file}" arg2="false"/>
+					<equals arg1="${build.lock}" arg2="false"/>
+					<equals arg1="${winphone81s}" arg2="true"/>
+				</and>
+				<then>
+					<delete dir ="${basedir}/build/winphone8"/>
+					<mkdir dir="${basedir}/build/winphone8"/>
+					<copy todir="${basedir}/build/winphone8" overwrite="true">
+						<fileset dir="${winphone8.build.file}"/>
+					</copy>
+				</then>
+			</elseif>
+		</if>
+	</target>
+
+	<target name="windows8build" if="windows8.set">
+		<property name="windows8.version.file"  value="false"/>
+		<property name="version.txt.file"  value="false"/>
+		<property name="build.lock"  value="false"/>
+
+		<available file="${basedir}/build/windows8/${windows8.version}.txt" property="windows8.version.file" value="true"/>
+		<available file="201710061811.txt" property="version.txt.file" value="true"/>
+		<available file="build.lock" property="build.lock" value="true"/>
+
+		<echo message="windows8.version : ${windows8.version}"/>
+		<echo message="windows8.version.file : ${windows8.version.file}"/>
+		<echo message="windows8.build.file : ${windows8.build.file}"/>
+		<echo message="windows10.available : ${windows10.build.file}"/>
+		<echo message="version.txt.file : ${version.txt.file}"/>
+		<echo message="build.lock : ${build.lock}"/>
+
+		<if>
+			<equals arg1="${windows8.available}" arg2="false"/>
+			<then>
+				<echo message= "windows8 plugin is not avaliable or disabled"/>
+			</then>
+			<elseif>
+				<and>
+					<equals arg1="${windows8.version.file}" arg2="false"/>
+					<equals arg1="${version.txt.file}" arg2="true"/>
+					<equals arg1="${build.lock}" arg2="false"/>
+					<equals arg1="${windows8}" arg2="true"/>
+				</and>
+				<then>
+					<delete dir ="${basedir}/build/windows8"/>
+					<mkdir dir="${basedir}/build/windows8"/>
+					<copy todir="${basedir}/build/windows8" overwrite="true">
+						<fileset dir="${windows8.build.file}"/>
+					</copy>
+				</then>
+			</elseif>
+		</if>
+	
+	</target>				
+	<target name="winphone10build" if="winphone10.set">
+		
+		<property name="winphone10.version.file"  value="false"/>
+		<property name="version.txt.file"  value="false"/>
+		<property name="build.lock"  value="false"/>
+
+		<available file="${basedir}/build/winphone10/${windows10.version}.txt" property="winphone10.version.file" value="true"/>
+		<available file="201710061811.txt" property="version.txt.file" value="true"/>
+		<available file="build.lock" property="build.lock" value="true"/>
+
+		<echo message="windows10.version : ${windows10.version}"/>
+		<echo message="windows10.version.file : ${winphone10.version.file}"/>
+		<echo message="windows10.build.file : ${windows10.build.file}"/>
+		<echo message="windows10.available : ${windows10.build.file}"/>
+		<echo message="version.txt.file : ${version.txt.file}"/>
+		<echo message="build.lock : ${build.lock}"/>
+
+		<if>
+			<equals arg1="${windows10.available}" arg2="false"/>
+			<then>
+				<echo message= "windows10 plugin is not avaliable or disabled"/>
+			</then>
+			<elseif>
+				<and>
+	 
+					<equals arg1="${build.lock}" arg2="false"/>
+				</and>
+				<then>
+				<echo message= "windows10 plugin is avaliable."/>
+					<delete dir ="${basedir}/build/windows10/Windows10Mobile"/>
+					<mkdir dir="${basedir}/build/windows10/Windows10Mobile"/>
+					<copy todir="${basedir}/build/windows10" overwrite="true">
+						<fileset dir="${windows10.build.file}"/>
+					</copy>
+				</then>
+			</elseif>
+		</if>
+	</target>
+	
+	<target name="windows10build" if="windows10.set">
+		<property name="windows10.version.file"  value="false"/>
+		<property name="version.txt.file"  value="false"/>
+		<property name="build.lock"  value="false"/>
+
+		<available file="${basedir}/build/windows10/${windows10.version}.txt" property="windows10.version.file" value="true"/>
+		<available file="201710061811.txt" property="version.txt.file" value="true"/>
+		<available file="build.lock" property="build.lock" value="true"/>
+
+		<echo message="windows10.version : ${windows10.version}"/>
+		<echo message="windows10.version.file : ${windows10.version.file}"/>
+		<echo message="windows10.build.file : ${windows10.build.file}"/>
+		<echo message="windows10.available : ${windows10.build.file}"/>
+		<echo message="version.txt.file : ${version.txt.file}"/>
+		<echo message="build.lock : ${build.lock}"/>
+
+		<if>
+			<equals arg1="${windows10.available}" arg2="false"/>
+			<then>
+				<echo message= "windows10 plugin is not avaliable or disabled"/>
+			</then>
+			<elseif>
+				<and>
+	 
+					<equals arg1="${build.lock}" arg2="false"/>
+				</and>
+				<then>
+				<echo message= "windows10 plugin is avaliable."/>
+					<delete dir ="${basedir}/build/windows10/Windows10"/>
+					<mkdir dir="${basedir}/build/windows10/Windows10"/>
+					<copy todir="${basedir}/build/windows10" overwrite="true">
+						<fileset dir="${windows10.build.file}"/>
+					</copy>
+				</then>
+			</elseif>
+		</if>
+	</target>
+	<target name="winmobile6xbuild" if="winmobile6x.set">
+		<property name="winmobile6x.version.file"  value="false"/>
+		<property name="version.txt.file"  value="false"/>
+		<property name="build.lock"  value="false"/>
+
+		<available file="${basedir}/build/luawinmobile6x/${winmobile6x.version}.txt" property="winmobile6xx.version.file" value="true"/>
+		<available file="201710061811.txt" property="version.txt.file" value="true"/>
+		<available file="build.lock" property="build.lock" value="true"/>
+
+		<echo message="winmobile6x.version : ${winmobile6x.version}"/>
+		<echo message="winmobile6x.version.file : ${winmobile6x.version.file}"/>
+		<echo message="winmobile6x.build.file : ${winmobile6x.build.file}"/>
+		<echo message="winmobile6x.available : ${winmobile6x.available}"/>
+		<echo message="version.txt.file : ${version.txt.file}"/>
+		<echo message="build.lock : ${build.lock}"/>
+
+		<if>
+			<equals arg1="${winmobile6x.available}" arg2="false"/>
+			<then>
+				<echo message= "winmobile6x plugin is not avaliable or disabled"/>
+			</then>
+			<elseif>
+				<and>
+					<equals arg1="${winmobile6x.version.file}" arg2="false"/>
+					<equals arg1="${version.txt.file}" arg2="true"/>
+					<equals arg1="${build.lock}" arg2="false"/>
+					<equals arg1="${winmobile6x}" arg2="true"/>
+				</and>
+				<then>
+					<delete dir ="${basedir}/build/luawinmobile6x"/>
+					<mkdir dir="${basedir}/build/luawinmobile6x"/>
+					<copy todir="${basedir}/build/luawinmobile6x" overwrite="true">
+						<fileset dir="${winmobile6x.build.file}"/>
+					</copy>
+				</then>
+			</elseif>
+		</if>
+	</target>
+
+
+
+
+	<target name="qtbuild" if="symbian.set">
+		<property name="qt.version.file"  value="false"/>
+		<property name="version.txt.file"  value="false"/>
+		<property name="build.lock"  value="false"/>
+
+		<available file="${basedir}/build/luaqt/${qt.version}.txt" property="qt.version.file" value="true"/>
+		<available file="201710061811.txt" property="version.txt.file" value="true"/>
+		<available file="build.lock" property="build.lock" value="true"/>
+
+		<echo message="qt.version : ${qt.version}"/>
+		<echo message="qt.version.file : ${qt.version.file}"/>
+		<echo message="qt.build.file : ${qt.build.file}"/>
+		<echo message="qt.available : ${qt.available}"/>
+		<echo message="version.txt.file : ${version.txt.file}"/>
+		<echo message="build.lock : ${build.lock}"/>
+
+		<if>
+			<equals arg1="${qt.available}" arg2="false"/>
+			<then>
+				<echo message= "QT plugin is not avaliable or disabled"/>
+			</then>
+			<elseif>
+				<and>
+					<equals arg1="${qt.version.file}" arg2="false"/>
+					<equals arg1="${version.txt.file}" arg2="true"/>
+					<equals arg1="${build.lock}" arg2="false"/>
+					<equals arg1="${symbian}" arg2="true"/>
+				</and>
+				<then>
+					<delete dir ="${basedir}/build/luaqt"/>
+					<mkdir dir="${basedir}/build/luaqt"/>
+					<copy todir="${basedir}/build/luaqt" overwrite="true">
+						<fileset dir="${qt.build.file}"/>
+					</copy>
+				</then>
+			</elseif>
+		</if>
+	</target>
+
+	<target name="webcommonbuild" if="webcommon.set">
+		<property name="webcommons.version.file"  value="false"/>
+		<property name="version.txt.file"  value="false"/>
+		<property name="build.lock"  value="false"/>
+
+		<available file="${basedir}/build/wap/${webcommons.version}.txt" property="webcommons.version.file" value="true"/>
+		<available file="201710061811.txt" property="version.txt.file" value="true"/>
+		<available file="build.lock" property="build.lock" value="true"/>
+
+		<echo message="webcommons.version : ${webcommons.version}"/>
+		<echo message="webcommons.version.file : ${webcommons.version.file}"/>
+		<echo message="webcommons.build.file : ${webcommons.build.file}"/>
+		<echo message="webcommons.available : ${webcommons.available}"/>
+		<echo message="version.txt.file : ${version.txt.file}"/>
+		<echo message="build.lock : ${build.lock}"/>
+
+		<if>
+			<equals arg1="${webcommons.available}" arg2="false"/>
+			<then>
+				<echo message= "webcommons plugin is not avaliable or disabled"/>
+			</then>
+			<elseif>
+				<and>
+					<equals arg1="${webcommons.version.file}" arg2="false"/>
+					<equals arg1="${version.txt.file}" arg2="true"/>
+					<equals arg1="${build.lock}" arg2="false"/>
+					<equals arg1="${webcommon.set}" arg2="true"/>
+				</and>
+				<then>
+					<delete dir ="${basedir}/build/wap"/>
+					<mkdir dir="${basedir}/build/wap"/>
+					<delete dir ="${basedir}/build/lib"/>
+					<!-- mkdir dir="${basedir}/build/lib"/ -->
+
+					<copy todir="${basedir}/build/wap" overwrite="true">
+						<fileset dir="${webcommons.build.file}/wap"/>
+					</copy>
+
+					<if>
+						<equals arg1="${spa.build.file}" arg2=""/>
+						<then>
+						</then>
+						<else>
+							<copy todir="${basedir}/build/wap" overwrite="true">
+								<fileset dir="${spa.build.file}/tc/wap"/>
+							</copy>
+						</else>
+					</if>
+				</then>
+			</elseif>
+		</if>
+	</target>
+
+	<target name="tcbuild" if="tc.set">
+		<property name="tc.version.file"  value="false"/>
+		<property name="version.txt.file"  value="false"/>
+		<property name="build.lock"  value="false"/>
+
+		<available file="${basedir}/build/wap/${tc.version}.txt" property="tc.version.file" value="true"/>
+		<available file="201710061811.txt" property="version.txt.file" value="true"/>
+		<available file="build.lock" property="build.lock" value="true"/>
+
+		<echo message="tc.version : ${tc.version}"/>
+		<echo message="tc.version.file : ${tc.version.file}"/>
+		<echo message="tc.build.file : ${tc.build.file}"/>
+		<echo message="tc.available : ${tc.available}"/>
+		<echo message="version.txt.file : ${version.txt.file}"/>
+		<echo message="build.lock : ${build.lock}"/>
+
+		<if>
+			<equals arg1="${tc.available}" arg2="false"/>
+			<then>
+				<echo message= "thin client plugin is not avaliable or disabled"/>
+			</then>
+			<elseif>
+				<and>
+					<equals arg1="${tc.version.file}" arg2="false"/>
+					<equals arg1="${version.txt.file}" arg2="true"/>
+					<equals arg1="${build.lock}" arg2="false"/>
+					<equals arg1="${tc}" arg2="true"/>
+				</and>
+				<then>
+					<!-- delete dir ="${basedir}/build/wap"/>
+					<mkdir dir="${basedir}/build/wap"/>
+					<delete dir ="${basedir}/build/lib"/ -->
+					<!-- mkdir dir="${basedir}/build/lib"/ -->
+
+					<copy todir="${basedir}/build/wap" overwrite="true">
+						<fileset dir="${tc.build.file}/wap"/>
+					</copy>
+
+					<if>
+						<equals arg1="${spa.build.file}" arg2=""/>
+						<then>
+						</then>
+						<else>
+							<copy todir="${basedir}/build/wap/inputdata/webfiles/spa" overwrite="true">
+								<fileset dir="${spa.build.file}/tc/wap/inputdata/webfiles/spa"/>
+							</copy>
+						</else>
+					</if>
+
+					<!-- copy todir="${basedir}/build/lib" overwrite="true">
+					<fileset dir="${tc.build.file}/lib"/>
+				</copy -->
+				</then>
+			</elseif>
+		</if>
+	</target>
+
+	<target name="desktopwebbuild" if="desktopweb.set">
+		<property name="desktopweb.version.file"  value="false"/>
+		<property name="version.txt.file"  value="false"/>
+		<property name="build.lock"  value="false"/>
+
+		<available file="${basedir}/build/desktopweb/${desktopweb.version}.txt" property="desktopweb.version.file" value="true"/>
+		<available file="201710061811.txt" property="version.txt.file" value="true"/>
+		<available file="build.lock" property="build.lock" value="true"/>
+
+		<echo message="desktopweb.version : ${desktopweb.version}"/>
+		<echo message="desktopweb.version.file : ${desktopweb.version.file}"/>
+		<echo message="desktopweb.build.file : ${desktopweb.build.file}"/>
+		<echo message="desktopweb.available : ${desktopweb.available}"/>
+		<echo message="version.txt.file : ${version.txt.file}"/>
+		<echo message="build.lock : ${build.lock}"/>
+
+		<if>
+			<equals arg1="${desktopweb.available}" arg2="false"/>
+			<then>
+				<echo message= "desktopweb plugin is not avaliable or disabled"/>
+			</then>
+			<elseif>
+				<and>
+					<equals arg1="${desktopweb.version.file}" arg2="false"/>
+					<equals arg1="${version.txt.file}" arg2="true"/>
+					<equals arg1="${build.lock}" arg2="false"/>
+					<equals arg1="${desktopweb}" arg2="true"/>
+				</and>
+				<then>
+					<delete dir ="${basedir}/build/desktopweb"/>
+					<mkdir dir="${basedir}/build/desktopweb"/>
+
+					<copy todir="${basedir}/build/desktopweb" overwrite="true">
+						<fileset dir="${desktopweb.build.file}/desktopweb"/>
+					</copy>
+
+					<available file="${tc.build.file}/wap" type="dir" property="wap.present"/>
+					<if>
+						<equals arg1="${wap.present}" arg2="true"/>
+						<then>
+							<copy todir="${basedir}/build/wap" overwrite="true">
+								<fileset dir="${tc.build.file}/wap"/>
+							</copy>
+						</then>
+					</if>
+				</then>
+			</elseif>
+		</if>
+	</target>
+
+	<target name="all" depends="init,checkversion,createversionfile,unzip,windowsdesktopbuild,
+		bbbuild,bb10build,androidbuild,tabrcandroidbuild,winmobilebuild,winphone8build,winphone81sbuild,winphone10build,windows8build,windows10build,webcommonbuild,tcbuild,desktopwebbuild,winmobile6xbuild"/>
+
+	<target name="checkservice">
+		<available property="usesservice" value="true" file="${svc.file}" type="file"/>
+	</target>
+
+	<target name="generateGuid" depends="init">
+		<exec executable="${basedir}/generateGuid.bat" failonerror="true" failifexecutionfails="true">
+			<env key="PATH" path="${env.PATH};${basedir}/GuidGenerator.exe;"/>
+		</exec>
+	</target>
+
+	<target name="addppdetailtosvc" if="usesservice">
+
+		<echo message="Project uses service..."/>
+		<copy file="${svc.file}" tofile="publish-web/servicedef.xml"/>
+
+		<tstamp/>
+
+		<replaceregexp file="publish-web/servicedef.xml"
+		  match="&lt;app-config.+&lt;/app-config&gt;"
+		  replace="&lt;app-config&gt;&lt;name&gt;${appname}&lt;/name&gt;&lt;version&gt;${appversion}&lt;/version&gt;&lt;vendor&gt;${vendorname}&lt;/vendor&gt;&lt;platform-version&gt;0.0.1&lt;/platform-version&gt;&lt;lastupdated&gt;${DSTAMP}.${TSTAMP}&lt;/lastupdated&gt;&lt;/app-config&gt;"
+		  flags="s"/>
+
+		<replaceregexp file="publish-web/servicedef.xml"
+		  match="&lt;app-config/&gt;"
+		  replace="&lt;app-config&gt;&lt;name&gt;${appname}&lt;/name&gt;&lt;version&gt;${appversion}&lt;/version&gt;&lt;vendor&gt;${vendorname}&lt;/vendor&gt;&lt;platform-version&gt;0.0.1&lt;/platform-version&gt;&lt;lastupdated&gt;${DSTAMP}.${TSTAMP}&lt;/lastupdated&gt;&lt;/app-config&gt;"
+		  flags="s"/>
+
+	</target>
+
+
+
+	<target name="addappdetailstotemplate" unless="usesservice">
+
+		<echo message="Project does not use any service..."/>
+		<copy file="build/servicedef-template.xml" tofile="publish-web/servicedef.xml"/>
+		<tstamp/>
+
+		<replaceregexp file="publish-web/servicedef.xml"
+		  match="&lt;app-config/&gt;"
+		  replace="&lt;app-config&gt;&lt;name&gt;${appname}&lt;/name&gt;&lt;version&gt;${appversion}&lt;/version&gt;&lt;vendor&gt;${vendorname}&lt;/vendor&gt;&lt;platform-version&gt;0.0.1&lt;/platform-version&gt;&lt;lastupdated&gt;${DSTAMP}.${TSTAMP}&lt;/lastupdated&gt;&lt;/app-config&gt;"
+		  flags="s"/>
+
+	</target>
+
+	<target name="copydefaultskinfiles" depends="init">
+		<copy todir="${default.theme.loc}" overwrite="true">
+			<fileset dir="defaultskins" includes="*.xml" excludes="projectskin.xml"/>
+		</copy>
+		<copy todir="${proj.loc}" overwrite="true">
+			<fileset dir="defaultskins" includes="projectskin.xml"/>
+		</copy>
+	</target>
+
+	<target name="moveforms" depends="init">
+		<available file="${forms.loc}/mobile" property="mobile.forms"/>
+		<if>
+			<equals arg1="${mobile.forms}" arg2="true"/>
+			<then>
+			</then>
+			<else>
+				<mkdir dir="${forms.loc}/mobile"/>
+			</else>
+		</if>
+		<move todir="${forms.loc}/mobile"  includeEmptyDirs="false">
+			<fileset dir="${forms.loc}" includes="*.*,iphone/*,blackberry/*,android/*,winmobile/*"/>
+		</move>
+		<available file="${popups.loc}/mobile" property="mobile.popups"/>
+		<if>
+			<equals arg1="${mobile.popups}" arg2="true"/>
+			<then>
+			</then>
+			<else>
+				<mkdir dir="${popups.loc}/mobile"/>
+			</else>
+		</if>
+		<move todir="${popups.loc}/mobile"  includeEmptyDirs="false">
+			<fileset dir="${popups.loc}" includes="*.*,iphone/*,blackberry/*,android/*,winmobile/*"/>
+		</move>
+		<available file="${headers.loc}/mobile" property="mobile.headers"/>
+		<if>
+			<equals arg1="${mobile.headers}" arg2="true"/>
+			<then>
+			</then>
+			<else>
+				<mkdir dir="${headers.loc}/mobile"/>
+			</else>
+		</if>
+		<move todir="${headers.loc}/mobile"  includeEmptyDirs="false">
+			<fileset dir="${headers.loc}" includes="*.*,iphone/*,blackberry/*,android/*,winmobile/*"/>
+		</move>
+		<available file="${footers.loc}/mobile" property="mobile.footers"/>
+		<if>
+			<equals arg1="${mobile.footers}" arg2="true"/>
+			<then>
+			</then>
+			<else>
+				<mkdir dir="${footers.loc}/mobile"/>
+			</else>
+		</if>
+		<move todir="${footers.loc}/mobile"  includeEmptyDirs="false">
+			<fileset dir="${footers.loc}" includes="*.*,iphone/*,blackberry/*,android/*,winmobile/*"/>
+		</move>
+
+		<delete dir="${forms.loc}/iphone" failonerror="false"/>
+		<delete dir="${forms.loc}/android" failonerror="false"/>
+		<delete dir="${forms.loc}/blackberry" failonerror="false"/>
+		<delete dir="${forms.loc}/winmobile" failonerror="false"/>
+
+		<delete dir="${popups.loc}/iphone" failonerror="false"/>
+		<delete dir="${popups.loc}/android" failonerror="false"/>
+		<delete dir="${popups.loc}/blackberry" failonerror="false"/>
+		<delete dir="${popups.loc}/winmobile" failonerror="false"/>
+
+		<delete dir="${footers.loc}/iphone" failonerror="false"/>
+		<delete dir="${footers.loc}/android" failonerror="false"/>
+		<delete dir="${footers.loc}/blackberry" failonerror="false"/>
+		<delete dir="${footers.loc}/winmobile" failonerror="false"/>
+
+		<delete dir="${headers.loc}/iphone" failonerror="false"/>
+		<delete dir="${headers.loc}/android" failonerror="false"/>
+		<delete dir="${headers.loc}/blackberry" failonerror="false"/>
+		<delete dir="${headers.loc}/winmobile" failonerror="false"/>
+		<!-- Deleting contents inside project/bgimages folder-->
+		<delete dir="${proj.loc}/bgimages" failonerror="false"/>
+	</target>
+
+	<target name="changemodules" depends="init">
+		<echo message="Modules location: ${modules.loc}"/>
+		<replaceregexp flags="gs" match="`(.*?)'" replace="![\1]!">
+			<fileset dir="${modules.loc}" includes="*.lua"/>
+		</replaceregexp>
+		<replaceregexp flags="gs" match="`(.*?)'" replace="![\1]!">
+			<fileset dir="${modules.loc}" includes="*.lua"/>
+		</replaceregexp>
+		<replaceregexp flags="igs" match="ifdef\s*\(!\[iphone\]!" replace="ifdef\(!\[m4iphone\]!">
+			<fileset dir="${modules.loc}" includes="*.lua"/>
+		</replaceregexp>
+		<replaceregexp flags="igs" match="ifdef\s*\(!\[android\]!" replace="ifdef\(!\[m4android\]!">
+			<fileset dir="${modules.loc}" includes="*.lua"/>
+		</replaceregexp>
+		<replaceregexp flags="igs" match="ifdef\s*\(!\[bb\]!" replace="ifdef\(!\[m4bb\]!">
+			<fileset dir="${modules.loc}" includes="*.lua"/>
+		</replaceregexp>
+		<replaceregexp flags="igs" match="ifdef\s*\(!\[winmobile\]!" replace="ifdef\(!\[m4winmobile\]!">
+			<fileset dir="${modules.loc}" includes="*.lua"/>
+		</replaceregexp>
+		<replaceregexp flags="igs" match="ifdef\s*\(!\[winphone8\]!" replace="ifdef\(!\[m4winphone8\]!">
+			<fileset dir="${modules.loc}" includes="*.lua"/>
+		</replaceregexp>
+		<replaceregexp flags="igs" match="ifdef\s*\(!\[windows8\]!" replace="ifdef\(!\[m4windows8\]!">
+			<fileset dir="${modules.loc}" includes="*.lua"/>
+		</replaceregexp>
+		<replaceregexp flags="igs" match="ifdef\s*\(!\[j2me\]!" replace="ifdef\(!\[m4j2me\]!">
+			<fileset dir="${modules.loc}" includes="*.lua"/>
+		</replaceregexp>
+		<replaceregexp flags="igs" match="ifdef\s*\(!\[symbian\]!" replace="ifdef\(!\[m4symbian\]!">
+			<fileset dir="${modules.loc}" includes="*.lua"/>
+		</replaceregexp>
+		<replaceregexp flags="igs" match="ifdef\s*\(!\[ipad\]!" replace="ifdef\(!\[m4ipad\]!">
+			<fileset dir="${modules.loc}" includes="*.lua"/>
+		</replaceregexp>
+		<replaceregexp flags="igs" match="ifdef\s*\(!\[palm\]!" replace="ifdef\(!\[m4palm\]!">
+			<fileset dir="${modules.loc}" includes="*.lua"/>
+		</replaceregexp>
+		<replaceregexp flags="igs" match="ifdef\s*\(!\[tabrcandroid\]!" replace="ifdef\(!\[m4tabrcandroid\]!">
+			<fileset dir="${modules.loc}" includes="*.lua"/>
+		</replaceregexp>
+		<replaceregexp flags="igs" match="ifdef\s*\(!\[wap\]!" replace="ifdef\(!\[m4wap\]!">
+			<fileset dir="${modules.loc}" includes="*.lua"/>
+		</replaceregexp>
+		<!-- Deleting contents inside project/bgimages folder-->
+		<delete dir="${proj.loc}/bgimages" failonerror="false"/>
+	</target>
+
+	<target name="publishinit">
+		<property file="build/platform.properties" />
+		<delete dir="publish" failonerror="true"/>
+		<delete file="${appid}.mwar" failonerror="true"/>
+		<delete dir="publish-web" failonerror="true"/>
+		<delete dir="resources"/>
+		<mkdir dir="publish"/>
+		<mkdir dir="resources"/>
+		<mkdir dir="publish-web"/>
+		<mkdir dir="publish/version"/>
+		<mkdir dir="publish/version/av${appversion}"/>
+		<touch file="publish/version/av${appversion}/pv${platform.version}"/>
+		<copy file="build/platform.properties" tofile="publish/version/app.properties"/>
+		<concat fixlastline="yes" destfile="publish/version/app.properties" append="true">app.version=${appversion}</concat>
+
+		<echo message="BB Version: ${bb.build.version}"/>
+	</target>
+
+	<target name="publish" depends="publishinit">
+		<property name="kpgenpath" location="${plugin.loc}/lib/kappgen.jar"/>
+		<taskdef name="findfilestask" classname="com.konylabs.tools.task.FindFilesTask" classpath="${kpgenpath}" />
+		<!-- ant contrib lib -->
+		<taskdef resource="net/sf/antcontrib/antcontrib.properties">
+			<classpath>
+				<pathelement location="${plugin.loc}/lib/ant-contrib-0.6.jar"/>
+			</classpath>
+		</taskdef>
+
+		<copy file="build/application-template.xml" tofile="publish-web/application.xml"/>
+		<replaceregexp file="publish-web/application.xml" match="&gt;appid&lt;" replace="&gt;${appid}&lt;" byline="true" flags="g"/>
+		<replaceregexp file="publish-web/application.xml" match="&lt;servicedefxml&gt;servicedef&lt;/servicedefxml&gt;" replace="" byline="true" flags="g"/>
+		<!-- For now we don't have SMS specific WAR file. Might get introduced later -->
+		<replaceregexp file="publish-web/application.xml" match="smswar" replace="" byline="true" flags="g"/>
+
+
+		<if>
+			<or>
+				<equals arg1="${j2me}" arg2="true"/>
+				<equals arg1="${iphone}" arg2="true"/>
+				<equals arg1="${ipad}" arg2="true"/>
+				<equals arg1="${bb}" arg2="true"/>
+				<equals arg1="${android}" arg2="true"/>
+				<equals arg1="${tabrcandroid}" arg2="true"/>
+				<equals arg1="${iphone}" arg2="true"/>
+				<equals arg1="${winmobile}" arg2="true"/>
+				<equals arg1="${winphone8}" arg2="true"/>
+				<equals arg1="${winphone81s}" arg2="true"/>
+				<equals arg1="${winphone10}" arg2="true"/>
+				<equals arg1="${windows8}" arg2="true"/>
+				<equals arg1="${windows10}" arg2="true"/>
+				<equals arg1="${winmobile6x}" arg2="true"/>
+				<equals arg1="${desktop_kiosk}" arg2="true"/>
+				<equals arg1="${symbian}" arg2="true"/>
+				<equals arg1="${web}" arg2="true"/>
+				<equals arg1="${spahybridbb}" arg2="true"/>
+				
+			</or>
+			<then>
+				<condition property="prefix" value="-rel" else="">
+					<equals arg1="${build.option}" arg2="release"/>
+				</condition>
+				<echo message="BUILD MODE: ${build.option}"/>
+				<!-- Rich Client BUILDS -->
+				<!--Not supporting midp1 
+				<copy file="build/luaj2me/midp1/dist/${appid}-midp1${prefix}.jar" tofile="publish/j2me/midp1/${appid}.jar"/>
+				<copy file="build/luaj2me/midp1/dist/${appid}-midp1${prefix}.jad" tofile="publish/j2me/midp1/${appid}.jad"/>
+				<copy file="build/luaj2me/midp1/dist/u${appid}-midp1${prefix}.jad" tofile="publish/j2me/midp1/u${appid}.jad"/>
+	
+				<replaceregexp file="publish/j2me/midp1/${appid}.jad" match="^(MIDlet-Jar-URL.+$)" replace="MIDlet-Jar-URL: ${publishurl}/k.jar?appid=${appid}&amp;type=j&amp;jd=midp1" byline="true"/>
+				<concat fixlastline="yes" destfile="publish/j2me/midp1/${appid}.jad" append="true">MIDlet-Install-Notify: ${publishurl}/jins?appid=${appid}&amp;action=install</concat>
+				<concat fixlastline="yes" destfile="publish/j2me/midp1/${appid}.jad" append="true">MIDlet-Delete-Notify: ${publishurl}/jins?appid=${appid}&amp;action=delete</concat>
+				<concat fixlastline="yes" destfile="publish/j2me/midp1/${appid}.jad" append="true">MicroEdition-Configuration: CLDC-1.0</concat>
+				<concat fixlastline="yes" destfile="publish/j2me/midp1/${appid}.jad" append="true">MicroEdition-Profile: MIDP-1.0</concat>
+				<replaceregexp file="publish/j2me/midp1/${appid}.jad" match="^(App-URL.+$)" replace="App-URL: ${publishurl}" byline="true"/>
+	                        
+				<replaceregexp file="publish/j2me/midp1/u${appid}.jad" match="^(MIDlet-Jar-URL.+$)" replace="MIDlet-Jar-URL: ${publishurl}/k.jar?appid=${appid}&amp;type=j&amp;jd=midp1" byline="true"/>
+				<concat fixlastline="yes" destfile="publish/j2me/midp1/u${appid}.jad" append="true">MIDlet-Install-Notify: ${publishurl}/jins?appid=${appid}&amp;action=install</concat>
+				<concat fixlastline="yes" destfile="publish/j2me/midp1/u${appid}.jad" append="true">MIDlet-Delete-Notify: ${publishurl}/jins?appid=${appid}&amp;action=delete</concat>
+				<concat fixlastline="yes" destfile="publish/j2me/midp1/u${appid}.jad" append="true">MicroEdition-Configuration: CLDC-1.0</concat>
+				<concat fixlastline="yes" destfile="publish/j2me/midp1/u${appid}.jad" append="true">MicroEdition-Profile: MIDP-1.0</concat>
+				<replaceregexp file="publish/j2me/midp1/u${appid}.jad" match="^(App-URL.+$)" replace="App-URL: ${publishurl}" byline="true"/>
+	                       -->
+				<!--************************************* START <J2ME MIDP2.0> ***************************************-->
+
+				<if>
+					<equals arg1="${j2me}" arg2="true"/>
+					<then>
+						<mkdir dir="publish/j2me/midp2"/>
+						<mkdir dir="publish/j2me/nokia"/>
+						<!-- Copy the properties file so that the admin console displays the published app properties-->
+						<copy file="publish/version/app.properties" todir="publish/j2me/midp2"/>
+
+						<copy file="build/luaj2me/midp2/dist/${appid}${prefix}.jar" tofile="publish/j2me/midp2/${appid}.jar"/>
+						<copy file="build/luaj2me/midp2/dist/${appid}${prefix}.jad" tofile="publish/j2me/midp2/${appid}.jad"/>
+						<copy file="build/luaj2me/midp2/dist/u${appid}${prefix}.jad" tofile="publish/j2me/midp2/u${appid}.jad"/>
+
+						<replaceregexp file="publish/j2me/midp2/${appid}.jad" match="^(MIDlet-Jar-URL.+$)" replace="MIDlet-Jar-URL: ${publishurl}/k.jar?appid=${appid}&amp;type=j&amp;jd=midp2" byline="true"/>
+						<concat fixlastline="yes" destfile="publish/j2me/midp2/${appid}.jad" append="true">MIDlet-Install-Notify: ${publishurl}/jins?appid=${appid}&amp;action=install</concat>
+						<concat fixlastline="yes" destfile="publish/j2me/midp2/${appid}.jad" append="true">MIDlet-Delete-Notify: ${publishurl}/jins?appid=${appid}&amp;action=delete</concat>
+						<concat fixlastline="yes" destfile="publish/j2me/midp2/${appid}.jad" append="true">MicroEdition-Configuration: CLDC-1.1</concat>
+						<concat fixlastline="yes" destfile="publish/j2me/midp2/${appid}.jad" append="true">MicroEdition-Profile: MIDP-2.0</concat>
+						<replaceregexp file="publish/j2me/midp2/${appid}.jad" match="^(App-URL.+$)" replace="App-URL: ${publishurl}" byline="true"/>
+
+						<!-- Unsigned JAD File-->
+						<replaceregexp file="publish/j2me/midp2/u${appid}.jad" match="^(MIDlet-Jar-URL.+$)" replace="MIDlet-Jar-URL: ${publishurl}/k.jar?appid=${appid}&amp;type=j&amp;jd=midp2" byline="true"/>
+						<concat fixlastline="yes" destfile="publish/j2me/midp2/u${appid}.jad" append="true">MIDlet-Install-Notify: ${publishurl}/jins?appid=${appid}&amp;action=install</concat>
+						<concat fixlastline="yes" destfile="publish/j2me/midp2/u${appid}.jad" append="true">MIDlet-Delete-Notify: ${publishurl}/jins?appid=${appid}&amp;action=delete</concat>
+						<concat fixlastline="yes" destfile="publish/j2me/midp2/u${appid}.jad" append="true">MicroEdition-Configuration: CLDC-1.1</concat>
+						<concat fixlastline="yes" destfile="publish/j2me/midp2/u${appid}.jad" append="true">MicroEdition-Profile: MIDP-2.0</concat>
+						<replaceregexp file="publish/j2me/midp2/u${appid}.jad" match="^(App-URL.+$)" replace="App-URL: ${publishurl}" byline="true"/>
+
+
+						<copy file="build/luaj2me/midp2/dist/${appid}-stylus${prefix}.jar" tofile="publish/j2me/midp2/${appid}-stylus.jar"/>
+						<copy file="build/luaj2me/midp2/dist/${appid}-stylus${prefix}.jad" tofile="publish/j2me/midp2/${appid}-stylus.jad"/>
+						<copy file="build/luaj2me/midp2/dist/u${appid}-stylus${prefix}.jad" tofile="publish/j2me/midp2/u${appid}-stylus.jad"/>
+
+						<replaceregexp file="publish/j2me/midp2/${appid}-stylus.jad" match="^(MIDlet-Jar-URL.+$)" replace="MIDlet-Jar-URL: ${publishurl}/k.jar?appid=${appid}&amp;type=j&amp;jd=midp2s" byline="true"/>
+						<concat fixlastline="yes" destfile="publish/j2me/midp2/${appid}-stylus.jad" append="true">MIDlet-Install-Notify: ${publishurl}/jins?appid=${appid}&amp;action=install</concat>
+						<concat fixlastline="yes" destfile="publish/j2me/midp2/${appid}-stylus.jad" append="true">MIDlet-Delete-Notify: ${publishurl}/jins?appid=${appid}&amp;action=delete</concat>
+						<concat fixlastline="yes" destfile="publish/j2me/midp2/${appid}-stylus.jad" append="true">MicroEdition-Configuration: CLDC-1.1</concat>
+						<concat fixlastline="yes" destfile="publish/j2me/midp2/${appid}-stylus.jad" append="true">MicroEdition-Profile: MIDP-2.0</concat>
+						<replaceregexp file="publish/j2me/midp2/${appid}-stylus.jad" match="^(App-URL.+$)" replace="App-URL: ${publishurl}" byline="true"/>
+
+						<!-- Unsigned JAD File -->
+						<!-- Copy the properties file so that the admin console displays the published app properties-->
+						<copy file="publish/version/app.properties" todir="publish/j2me/stylus"/>
+						<replaceregexp file="publish/j2me/midp2/u${appid}-stylus.jad" match="^(MIDlet-Jar-URL.+$)" replace="MIDlet-Jar-URL: ${publishurl}/k.jar?appid=${appid}&amp;type=j&amp;jd=midp2s" byline="true"/>
+						<concat fixlastline="yes" destfile="publish/j2me/midp2/u${appid}-stylus.jad" append="true">MIDlet-Install-Notify: ${publishurl}/jins?appid=${appid}&amp;action=install</concat>
+						<concat fixlastline="yes" destfile="publish/j2me/midp2/u${appid}-stylus.jad" append="true">MIDlet-Delete-Notify: ${publishurl}/jins?appid=${appid}&amp;action=delete</concat>
+						<concat fixlastline="yes" destfile="publish/j2me/midp2/u${appid}-stylus.jad" append="true">MicroEdition-Configuration: CLDC-1.1</concat>
+						<concat fixlastline="yes" destfile="publish/j2me/midp2/u${appid}-stylus.jad" append="true">MicroEdition-Profile: MIDP-2.0</concat>
+						<replaceregexp file="publish/j2me/midp2/u${appid}-stylus.jad" match="^(App-URL.+$)" replace="App-URL: ${publishurl}" byline="true"/>
+
+						<!-- Copy the properties file so that the admin console displays the published app properties-->
+						<copy file="publish/version/app.properties" todir="publish/j2me/nokia"/>
+						<copy file="build/luaj2me/midp2/dist/${appid}-nokia${prefix}.jar" tofile="publish/j2me/nokia/${appid}.jar"/>
+						<copy file="build/luaj2me/midp2/dist/${appid}-nokia${prefix}.jad" tofile="publish/j2me/nokia/${appid}.jad"/>
+						<copy file="build/luaj2me/midp2/dist/u${appid}-nokia${prefix}.jad" tofile="publish/j2me/nokia/u${appid}.jad"/>
+
+
+						<replaceregexp file="publish/j2me/nokia/${appid}.jad" match="^(MIDlet-Jar-URL.+$)" replace="MIDlet-Jar-URL: ${publishurl}/k.jar?appid=${appid}&amp;type=nokia" byline="true"/>
+						<concat fixlastline="yes" destfile="publish/j2me/nokia/${appid}.jad" append="true">MIDlet-Install-Notify: ${publishurl}/jins?appid=${appid}&amp;action=install</concat>
+						<concat fixlastline="yes" destfile="publish/j2me/nokia/${appid}.jad" append="true">MIDlet-Delete-Notify: ${publishurl}/jins?appid=${appid}&amp;action=delete</concat>
+						<concat fixlastline="yes" destfile="publish/j2me/nokia/${appid}.jad" append="true">MicroEdition-Configuration: CLDC-1.1</concat>
+						<concat fixlastline="yes" destfile="publish/j2me/nokia/${appid}.jad" append="true">MicroEdition-Profile: MIDP-2.0</concat>
+						<replaceregexp file="publish/j2me/nokia/${appid}.jad" match="^(App-URL.+$)" replace="App-URL: ${publishurl}" byline="true"/>
+
+						<!-- Unsgined JAD File -->
+						<replaceregexp file="publish/j2me/nokia/u${appid}.jad" match="^(MIDlet-Jar-URL.+$)" replace="MIDlet-Jar-URL: ${publishurl}/k.jar?appid=${appid}&amp;type=nokia" byline="true"/>
+						<concat fixlastline="yes" destfile="publish/j2me/nokia/u${appid}.jad" append="true">MIDlet-Install-Notify: ${publishurl}/jins?appid=${appid}&amp;action=install</concat>
+						<concat fixlastline="yes" destfile="publish/j2me/nokia/u${appid}.jad" append="true">MIDlet-Delete-Notify: ${publishurl}/jins?appid=${appid}&amp;action=delete</concat>
+						<concat fixlastline="yes" destfile="publish/j2me/nokia/u${appid}.jad" append="true">MicroEdition-Configuration: CLDC-1.1</concat>
+						<concat fixlastline="yes" destfile="publish/j2me/nokia/u${appid}.jad" append="true">MicroEdition-Profile: MIDP-2.0</concat>
+						<replaceregexp file="publish/j2me/nokia/u${appid}.jad" match="^(App-URL.+$)" replace="App-URL: ${publishurl}" byline="true"/>
+
+						<if>
+							<equals arg1="${plugin.mode}" arg2="nongui"/>
+							<then>
+								<copy todir="${binaries.location}/j2me">
+									<fileset dir="publish/j2me"/>
+								</copy>
+							</then>
+						</if>
+					</then>
+				</if>
+
+				<!--************************************* END <J2ME MIDP2.0> ***************************************-->
+
+
+				<!--************************************* START <Blackberry> ***************************************-->
+
+				<if>
+					<equals arg1="${bb}" arg2="true"/>
+					<then>
+						<mkdir dir="publish/blackberry"/>
+						<mkdir dir="publish/blackberry41"/>
+						<copy file="downloadfile.properties" tofile="publish/downloadfile.properties"/>
+						<!--Small DEVICE-->
+						<!--4.2.1 publish files.... -->
+						<available file="${basedir}/build/luaj2me/blackberry/dist/small-${appid}-bb${prefix}.cod" property="bb42small.present" />
+						<echo message="bb42small.present  :  ${bb42small.present}" />
+						<if>
+							<equals arg1="${bb42small.present}" arg2="true" />
+							<then>
+
+								<signjar file.name="small-${appid}-bb${prefix}.cod"/>
+
+								<!-- copy to publish folder -->
+								<mkdir dir="${basedir}/publish/blackberry/small/42" />
+								<copy file="${basedir}/build/luaj2me/blackberry/dist/small-${appid}-bb${prefix}.jad" todir="${basedir}/publish/blackberry/small/42" failonerror="false" />
+
+								<unzip src="${basedir}/build/luaj2me/blackberry/dist/small-${appid}-bb${prefix}.cod" dest="${basedir}/publish/blackberry/small/42" overwrite="true" />
+
+								<copy file="${basedir}/build/luaj2me/blackberry/dist/small-${appid}-bb${prefix}.cod" todir="${basedir}/publish/blackberry/sideloading/small/42" overwrite="true" />
+								<copy file="${basedir}/build/luaj2me/blackberry/dist/small-${appid}-bb${prefix}.cso" todir="${basedir}/publish/blackberry/sideloading/small/42" overwrite="true" failonerror="false"/>
+								<copy file="${basedir}/build/luaj2me/blackberry/dist/small-${appid}-bb${prefix}.csl" todir="${basedir}/publish/blackberry/sideloading/small/42" overwrite="true" failonerror="false"/>
+							</then>
+						</if>
+
+						<!--4.5 publish files.... -->
+						<available file="${basedir}/build/luaj2me/blackberry/dist/45-small-${appid}-bb${prefix}.cod" property="bb45small.present" />
+						<echo message="bb45small.present  :  ${bb45small.present}" />
+						<if>
+							<equals arg1="${bb45small.present}" arg2="true" />
+							<then>
+
+								<signjar file.name="45-small-${appid}-bb${prefix}.cod"/>
+
+								<!-- copy to publish folder -->
+								<mkdir dir="${basedir}/publish/blackberry/small/45" />
+								<copy file="${basedir}/build/luaj2me/blackberry/dist/45-small-${appid}-bb${prefix}.jad" todir="${basedir}/publish/blackberry/small/45" failonerror="false" />
+
+								<unzip src="${basedir}/build/luaj2me/blackberry/dist/45-small-${appid}-bb${prefix}.cod" dest="${basedir}/publish/blackberry/small/45" overwrite="true" />
+								<copy file="${basedir}/build/luaj2me/blackberry/dist/45-small-${appid}-bb${prefix}.cod" todir="${basedir}/publish/blackberry/sideloading/small/45" overwrite="true" />
+								<copy file="${basedir}/build/luaj2me/blackberry/dist/45-small-${appid}-bb${prefix}.cso" todir="${basedir}/publish/blackberry/sideloading/small/45" overwrite="true" failonerror="false"/>
+								<copy file="${basedir}/build/luaj2me/blackberry/dist/45-small-${appid}-bb${prefix}.csl" todir="${basedir}/publish/blackberry/sideloading/small/45" overwrite="true" failonerror="false"/>
+							</then>
+						</if>
+						<!--END Small DEVICE-->
+
+						<!--Medium DEVICE-->
+						<!--4.2.1 publish files.... -->
+						<available file="${basedir}/build/luaj2me/blackberry/dist/${appid}-bb${prefix}.cod" property="bb42medium.present" />
+						<echo message="bb42medium.present  :  ${bb42medium.present}" />
+						<if>
+							<equals arg1="${bb42medium.present}" arg2="true" />
+							<then>
+
+								<signjar file.name="${appid}-bb${prefix}.cod"/>
+
+								<!-- copy to publish folder -->
+								<mkdir dir="${basedir}/publish/blackberry/medium/42" />
+								<copy file="${basedir}/build/luaj2me/blackberry/dist/${appid}-bb${prefix}.jad" todir="${basedir}/publish/blackberry/medium/42" failonerror="false" />
+
+								<unzip src="${basedir}/build/luaj2me/blackberry/dist/${appid}-bb${prefix}.cod" dest="${basedir}/publish/blackberry/medium/42" overwrite="true" />
+								<copy file="${basedir}/build/luaj2me/blackberry/dist/${appid}-bb${prefix}.cod" todir="${basedir}/publish/blackberry/sideloading/medium/42" overwrite="true" />
+								<copy file="${basedir}/build/luaj2me/blackberry/dist/${appid}-bb${prefix}.cso" todir="${basedir}/publish/blackberry/sideloading/medium/42" overwrite="true" failonerror="false"/>
+								<copy file="${basedir}/build/luaj2me/blackberry/dist/${appid}-bb${prefix}.csl" todir="${basedir}/publish/blackberry/sideloading/medium/42" overwrite="true" failonerror="false"/>
+							</then>
+						</if>
+
+						<!--4.5 publish files.... -->
+						<available file="${basedir}/build/luaj2me/blackberry/dist/45-${appid}-bb${prefix}.cod" property="bb45medium.present" />
+						<echo message="bb45medium.present  :  ${bb45medium.present}" />
+						<if>
+							<equals arg1="${bb45medium.present}" arg2="true" />
+							<then>
+
+								<signjar file.name="45-${appid}-bb${prefix}.cod"/>
+
+								<!-- copy to publish folder -->
+								<mkdir dir="${basedir}/publish/blackberry/medium/45" />
+								<copy file="${basedir}/build/luaj2me/blackberry/dist/45-${appid}-bb${prefix}.jad" todir="${basedir}/publish/blackberry/medium/45" failonerror="false" />
+
+								<unzip src="${basedir}/build/luaj2me/blackberry/dist/45-${appid}-bb${prefix}.cod" dest="${basedir}/publish/blackberry/medium/45" overwrite="true" />
+								<copy file="${basedir}/build/luaj2me/blackberry/dist/45-${appid}-bb${prefix}.cod" todir="${basedir}/publish/blackberry/sideloading/medium/45" overwrite="true" />
+								<copy file="${basedir}/build/luaj2me/blackberry/dist/45-${appid}-bb${prefix}.cso" todir="${basedir}/publish/blackberry/sideloading/medium/45" overwrite="true" failonerror="false"/>
+								<copy file="${basedir}/build/luaj2me/blackberry/dist/45-${appid}-bb${prefix}.csl" todir="${basedir}/publish/blackberry/sideloading/medium/45" overwrite="true" failonerror="false"/>
+							</then>
+						</if>
+
+						<!--5.0 publish files.... -->
+						<available file="${basedir}/build/luaj2me/blackberry/dist/50-${appid}-bb${prefix}.cod" property="bb50medium.present" />
+						<echo message="bb50medium.present  :  ${bb50medium.present}" />
+						<if>
+							<equals arg1="${bb50medium.present}" arg2="true" />
+							<then>
+
+								<signjar file.name="50-${appid}-bb${prefix}.cod"/>
+
+								<!-- copy to publish folder -->
+								<mkdir dir="${basedir}/publish/blackberry/medium/50" />
+								<copy file="${basedir}/build/luaj2me/blackberry/dist/50-${appid}-bb${prefix}.jad" todir="${basedir}/publish/blackberry/medium/50" failonerror="false" />
+
+								<unzip src="${basedir}/build/luaj2me/blackberry/dist/50-${appid}-bb${prefix}.cod" dest="${basedir}/publish/blackberry/medium/50" overwrite="true" />
+								<copy file="${basedir}/build/luaj2me/blackberry/dist/50-${appid}-bb${prefix}.cod" todir="${basedir}/publish/blackberry/sideloading/medium/50" overwrite="true" />
+								<copy file="${basedir}/build/luaj2me/blackberry/dist/50-${appid}-bb${prefix}.cso" todir="${basedir}/publish/blackberry/sideloading/medium/50" overwrite="true" failonerror="false"/>
+								<copy file="${basedir}/build/luaj2me/blackberry/dist/50-${appid}-bb${prefix}.csl" todir="${basedir}/publish/blackberry/sideloading/medium/50" overwrite="true" failonerror="false"/>
+							</then>
+						</if>
+
+						<!--END Medium DEVICE-->
+
+
+						<!--Large DEVICE-->
+						<!--4.5 publish files.... -->
+						<available file="${basedir}/build/luaj2me/blackberry/dist/large-${appid}-bb${prefix}.cod" property="bb45large.present" />
+						<echo message="bb45large.present  :  ${bb45large.present}" />
+						<if>
+							<equals arg1="${bb45large.present}" arg2="true" />
+							<then>
+
+								<signjar file.name="large-${appid}-bb${prefix}.cod"/>
+
+								<!-- copy to publish folder -->
+								<mkdir dir="${basedir}/publish/blackberry/large/45" />
+								<copy file="${basedir}/build/luaj2me/blackberry/dist/large-${appid}-bb${prefix}.jad" todir="${basedir}/publish/blackberry/large/45" failonerror="false" />
+
+								<unzip src="${basedir}/build/luaj2me/blackberry/dist/large-${appid}-bb${prefix}.cod" dest="${basedir}/publish/blackberry/large/45" overwrite="true" />
+								<copy file="${basedir}/build/luaj2me/blackberry/dist/large-${appid}-bb${prefix}.cod" todir="${basedir}/publish/blackberry/sideloading/large/45" overwrite="true" />
+								<copy file="${basedir}/build/luaj2me/blackberry/dist/large-${appid}-bb${prefix}.cso" todir="${basedir}/publish/blackberry/sideloading/large/45" overwrite="true" failonerror="false"/>
+								<copy file="${basedir}/build/luaj2me/blackberry/dist/large-${appid}-bb${prefix}.csl" todir="${basedir}/publish/blackberry/sideloading/large/45" overwrite="true" failonerror="false"/>
+							</then>
+						</if>
+						<!--5.0 publish files.... -->
+						<available file="${basedir}/build/luaj2me/blackberry/dist/50-large-${appid}-bb${prefix}.cod" property="bb50large.present" />
+						<echo message="bb50large.present  :  ${bb50large.present}" />
+						<if>
+							<equals arg1="${bb50large.present}" arg2="true" />
+							<then>
+
+								<signjar file.name="50-large-${appid}-bb${prefix}.cod"/>
+
+								<!-- copy to publish folder -->
+								<mkdir dir="${basedir}/publish/blackberry/large/50" />
+								<copy file="${basedir}/build/luaj2me/blackberry/dist/50-large-${appid}-bb${prefix}.jad" todir="${basedir}/publish/blackberry/large/50" failonerror="false" />
+
+								<unzip src="${basedir}/build/luaj2me/blackberry/dist/50-large-${appid}-bb${prefix}.cod" dest="${basedir}/publish/blackberry/large/50" overwrite="true" />
+								<copy file="${basedir}/build/luaj2me/blackberry/dist/50-large-${appid}-bb${prefix}.cod" todir="${basedir}/publish/blackberry/sideloading/large/50" overwrite="true" />
+								<copy file="${basedir}/build/luaj2me/blackberry/dist/50-large-${appid}-bb${prefix}.cso" todir="${basedir}/publish/blackberry/sideloading/large/50" overwrite="true" failonerror="false"/>
+								<copy file="${basedir}/build/luaj2me/blackberry/dist/50-large-${appid}-bb${prefix}.csl" todir="${basedir}/publish/blackberry/sideloading/large/50" overwrite="true" failonerror="false"/>
+							</then>
+						</if>
+
+						<!--6.0 publish files.... -->
+						<available file="${basedir}/build/luaj2me/blackberry/dist/60-large-${appid}-bb${prefix}.cod" property="bb60large.present" />
+						<echo message="bb60large.present  :  ${bb60large.present}" />
+						<if>
+							<equals arg1="${bb60large.present}" arg2="true" />
+							<then>
+
+								<signjar file.name="60-large-${appid}-bb${prefix}.cod"/>
+
+								<!-- copy to publish folder -->
+								<mkdir dir="${basedir}/publish/blackberry/large/60" />
+								<copy file="${basedir}/build/luaj2me/blackberry/dist/60-large-${appid}-bb${prefix}.jad" todir="${basedir}/publish/blackberry/large/60" failonerror="false" />
+
+								<unzip src="${basedir}/build/luaj2me/blackberry/dist/60-large-${appid}-bb${prefix}.cod" dest="${basedir}/publish/blackberry/large/60" overwrite="true" />
+								<copy file="${basedir}/build/luaj2me/blackberry/dist/60-large-${appid}-bb${prefix}.cod" todir="${basedir}/publish/blackberry/sideloading/large/60" overwrite="true" />
+								<copy file="${basedir}/build/luaj2me/blackberry/dist/60-large-${appid}-bb${prefix}.cso" todir="${basedir}/publish/blackberry/sideloading/large/60" overwrite="true" failonerror="false"/>
+								<copy file="${basedir}/build/luaj2me/blackberry/dist/60-large-${appid}-bb${prefix}.csl" todir="${basedir}/publish/blackberry/sideloading/large/60" overwrite="true" failonerror="false"/>
+							</then>
+						</if>
+						<!--END Large DEVICE-->
+
+
+						<!--STORM DEVICE-->
+						<!--OS 4.7 publish files.... -->
+						<available file="${basedir}/build/luaj2me/blackberry47/dist/${appid}-bb-47${prefix}.cod" property="bb47storm.present" />
+						<echo message="bb47storm.present  :  ${bb47storm.present}" />
+						<if>
+							<equals arg1="${bb47storm.present}" arg2="true" />
+							<then>
+
+								<signjar file.name="${appid}-bb-47${prefix}.cod" dir.name="blackberry47"/>
+
+								<!-- copy to publish folder -->
+								<mkdir dir="${basedir}/publish/blackberry/storm/47" />
+								<copy file="${basedir}/build/luaj2me/blackberry47/dist/${appid}-bb-47${prefix}.jad" todir="${basedir}/publish/blackberry/storm/47" failonerror="false" />
+
+								<unzip src="${basedir}/build/luaj2me/blackberry47/dist/${appid}-bb-47${prefix}.cod" dest="${basedir}/publish/blackberry/storm/47" overwrite="true" />
+								<copy file="${basedir}/build/luaj2me/blackberry47/dist/${appid}-bb-47${prefix}.cod" todir="${basedir}/publish/blackberry/sideloading/storm/47" overwrite="true" />
+								<copy file="${basedir}/build/luaj2me/blackberry47/dist/${appid}-bb-47${prefix}.cso" todir="${basedir}/publish/blackberry/sideloading/storm/47" overwrite="true" failonerror="false"/>
+								<copy file="${basedir}/build/luaj2me/blackberry47/dist/${appid}-bb-47${prefix}.csl" todir="${basedir}/publish/blackberry/sideloading/storm/47" overwrite="true" failonerror="false"/>
+							</then>
+						</if>
+
+						<!--OS 5.0 publish files.... -->
+						<available file="${basedir}/build/luaj2me/blackberry47/dist/${appid}-bb-50-storm${prefix}.cod" property="bb50storm.present" />
+						<echo message="bb50storm.present  :  ${bb50storm.present}" />
+						<if>
+							<equals arg1="${bb50storm.present}" arg2="true" />
+							<then>
+
+								<signjar file.name="${appid}-bb-50-storm${prefix}.cod" dir.name="blackberry47"/>
+
+								<!-- copy to publish folder -->
+								<mkdir dir="${basedir}/publish/blackberry/storm/50" />
+								<copy file="${basedir}/build/luaj2me/blackberry47/dist/${appid}-bb-50-storm${prefix}.jad" todir="${basedir}/publish/blackberry/storm/50" failonerror="false" />
+
+								<unzip src="${basedir}/build/luaj2me/blackberry47/dist/${appid}-bb-50-storm${prefix}.cod" dest="${basedir}/publish/blackberry/storm/50" overwrite="true" />
+								<copy file="${basedir}/build/luaj2me/blackberry47/dist/${appid}-bb-50-storm${prefix}.cod" todir="${basedir}/publish/blackberry/sideloading/storm/50" overwrite="true" />
+								<copy file="${basedir}/build/luaj2me/blackberry47/dist/${appid}-bb-50-storm${prefix}.cso" todir="${basedir}/publish/blackberry/sideloading/storm/50" overwrite="true" failonerror="false"/>
+								<copy file="${basedir}/build/luaj2me/blackberry47/dist/${appid}-bb-50-storm${prefix}.csl" todir="${basedir}/publish/blackberry/sideloading/storm/50" overwrite="true" failonerror="false"/>
+							</then>
+						</if>
+
+						<!--OS 6.0 publish files.... -->
+						<available file="${basedir}/build/luaj2me/blackberry47/dist/${appid}-bb-60-storm${prefix}.cod" property="bb60storm.present" />
+						<echo message="bb60storm.present  :  ${bb60storm.present}" />
+						<if>
+							<equals arg1="${bb60storm.present}" arg2="true" />
+							<then>
+
+								<signjar file.name="${appid}-bb-60-storm${prefix}.cod" dir.name="blackberry47"/>
+
+								<!-- copy to publish folder -->
+								<if>
+									<!-- ${bb.build.version} property is taken from downloadfile.properties file 
+								Ex: 6.0,5.0 or 7.0-->
+									<bool>
+										<contains string="${bb.build.version}" substring="6.0" casesensitive="false"/>
+									</bool>
+									<then>
+										<mkdir dir="${basedir}/publish/blackberry/storm/60" />
+										<copy file="${basedir}/build/luaj2me/blackberry47/dist/${appid}-bb-60-storm${prefix}.jad" todir="${basedir}/publish/blackberry/storm/60" failonerror="false" />
+
+										<unzip src="${basedir}/build/luaj2me/blackberry47/dist/${appid}-bb-60-storm${prefix}.cod" dest="${basedir}/publish/blackberry/storm/60" overwrite="true" />
+										<copy file="${basedir}/build/luaj2me/blackberry47/dist/${appid}-bb-60-storm${prefix}.cod" todir="${basedir}/publish/blackberry/sideloading/storm/60" overwrite="true" />
+										<copy file="${basedir}/build/luaj2me/blackberry47/dist/${appid}-bb-60-storm${prefix}.cso" todir="${basedir}/publish/blackberry/sideloading/storm/60" overwrite="true" failonerror="false"/>
+										<copy file="${basedir}/build/luaj2me/blackberry47/dist/${appid}-bb-60-storm${prefix}.csl" todir="${basedir}/publish/blackberry/sideloading/storm/60" overwrite="true" failonerror="false"/>
+									</then>
+								</if>
+							</then>
+						</if>
+
+						<!--END STORM DEVICE-->
+
+						<!-- Style device-->
+						<!--5.0 publish files.... -->
+						<available file="${basedir}/build/luaj2me/blackberry/dist/50-pearl3g-${appid}-bb${prefix}.cod" property="bb50style.present" />
+						<echo message="bb50style.present  :  ${bb50style.present}" />
+						<if>
+							<equals arg1="${bb50style.present}" arg2="true" />
+							<then>
+
+								<signjar file.name="50-pearl3g-${appid}-bb${prefix}.cod"/>
+
+								<!-- copy to publish folder -->
+								<mkdir dir="${basedir}/publish/blackberry/style/50" />
+								<copy file="${basedir}/build/luaj2me/blackberry/dist/50-pearl3g-${appid}-bb${prefix}.jad" todir="${basedir}/publish/blackberry/style/50" failonerror="false" />
+
+								<unzip src="${basedir}/build/luaj2me/blackberry/dist/50-pearl3g-${appid}-bb${prefix}.cod" dest="${basedir}/publish/blackberry/style/50" overwrite="true" />
+								<copy file="${basedir}/build/luaj2me/blackberry/dist/50-pearl3g-${appid}-bb${prefix}.cod" todir="${basedir}/publish/blackberry/sideloading/style/50" overwrite="true" />
+								<copy file="${basedir}/build/luaj2me/blackberry/dist/50-pearl3g-${appid}-bb${prefix}.cso" todir="${basedir}/publish/blackberry/sideloading/style/50" overwrite="true" failonerror="false"/>
+								<copy file="${basedir}/build/luaj2me/blackberry/dist/50-pearl3g-${appid}-bb${prefix}.csl" todir="${basedir}/publish/blackberry/sideloading/style/50" overwrite="true" failonerror="false"/>
+							</then>
+						</if>
+						<!-- END Style device-->
+
+
+						<!-- Bold Touch Device -->
+						<!--OS 7.0 publish files.... -->
+						<available file="${basedir}/build/luaj2me/blackberry47/dist/${appid}-bb-70-boldtouch${prefix}.cod" property="bb70boldtouch.present" />
+						<echo message="bb70boldtouch.present  :  ${bb70boldtouch.present}" />
+						<if>
+							<equals arg1="${bb70boldtouch.present}" arg2="true" />
+							<then>
+
+								<signjar file.name="${appid}-bb-70-boldtouch${prefix}.cod" dir.name="blackberry47"/>
+
+								<!-- copy to publish folder -->
+								<mkdir dir="${basedir}/publish/blackberry/boldtouch/70" />
+								<copy file="${basedir}/build/luaj2me/blackberry47/dist/${appid}-bb-70-boldtouch${prefix}.jad" todir="${basedir}/publish/blackberry/boldtouch/70" failonerror="false" />
+
+								<unzip src="${basedir}/build/luaj2me/blackberry47/dist/${appid}-bb-70-boldtouch${prefix}.cod" dest="${basedir}/publish/blackberry/boldtouch/70" overwrite="true" />
+								<copy file="${basedir}/build/luaj2me/blackberry47/dist/${appid}-bb-70-boldtouch${prefix}.cod" todir="${basedir}/publish/blackberry/sideloading/boldtouch/70" overwrite="true" />
+								<copy file="${basedir}/build/luaj2me/blackberry47/dist/${appid}-bb-70-boldtouch${prefix}.cso" todir="${basedir}/publish/blackberry/sideloading/boldtouch/70" overwrite="true" failonerror="false"/>
+								<copy file="${basedir}/build/luaj2me/blackberry47/dist/${appid}-bb-70-boldtouch${prefix}.csl" todir="${basedir}/publish/blackberry/sideloading/boldtouch/70" overwrite="true" failonerror="false"/>
+							</then>
+						</if>
+						<!-- END Bold Touch Device-->
+
+						<!-- Touch Only Device -->
+						<!--OS 7.0 publish files.... -->
+						<available file="${basedir}/build/luaj2me/blackberry47/dist/${appid}-bb-70-touchonly${prefix}.cod" property="bb70touchonly.present" />
+						<echo message="bb70touchonly.present  :  ${bb70touchonly.present}" />
+						<if>
+							<equals arg1="${bb70touchonly.present}" arg2="true" />
+							<then>
+
+								<signjar file.name="${appid}-bb-70-touchonly${prefix}.cod" dir.name="blackberry47"/>
+
+								<!-- copy to publish folder -->
+								<mkdir dir="${basedir}/publish/blackberry/touchonly/70" />
+								<copy file="${basedir}/build/luaj2me/blackberry47/dist/${appid}-bb-70-touchonly${prefix}.jad" todir="${basedir}/publish/blackberry/touchonly/70" failonerror="false" />
+
+								<unzip src="${basedir}/build/luaj2me/blackberry47/dist/${appid}-bb-70-touchonly${prefix}.cod" dest="${basedir}/publish/blackberry/touchonly/70" overwrite="true" />
+								<copy file="${basedir}/build/luaj2me/blackberry47/dist/${appid}-bb-70-touchonly${prefix}.cod" todir="${basedir}/publish/blackberry/sideloading/touchonly/70" overwrite="true" />
+								<copy file="${basedir}/build/luaj2me/blackberry47/dist/${appid}-bb-70-touchonly${prefix}.cso" todir="${basedir}/publish/blackberry/sideloading/touchonly/70" overwrite="true" failonerror="false"/>
+								<copy file="${basedir}/build/luaj2me/blackberry47/dist/${appid}-bb-70-touchonly${prefix}.csl" todir="${basedir}/publish/blackberry/sideloading/touchonly/70" overwrite="true" failonerror="false"/>
+							</then>
+						</if>
+						<!-- END Touch Only Device-->
+
+
+						<!--TORCH DEVICE-->
+						<!--OS 7.0 publish files.... -->
+						<available file="${basedir}/build/luaj2me/blackberry47/dist/${appid}-bb-70-torch${prefix}.cod" property="bb70torch.present" />
+						<echo message="bb70torch.present  :  ${bb70torch.present}" />
+						<if>
+							<equals arg1="${bb70torch.present}" arg2="true" />
+							<then>
+								<signjar file.name="${appid}-bb-70-torch${prefix}.cod" dir.name="blackberry47"/>
+
+								<!-- copy to publish folder -->
+								<mkdir dir="${basedir}/publish/blackberry/torch/70" />
+								<copy file="${basedir}/build/luaj2me/blackberry47/dist/${appid}-bb-70-torch${prefix}.jad" todir="${basedir}/publish/blackberry/torch/70" failonerror="false" />
+
+								<unzip src="${basedir}/build/luaj2me/blackberry47/dist/${appid}-bb-70-torch${prefix}.cod" dest="${basedir}/publish/blackberry/torch/70" overwrite="true" />
+								<copy file="${basedir}/build/luaj2me/blackberry47/dist/${appid}-bb-70-torch${prefix}.cod" todir="${basedir}/publish/blackberry/sideloading/torch/70" overwrite="true" />
+								<copy file="${basedir}/build/luaj2me/blackberry47/dist/${appid}-bb-70-torch${prefix}.cso" todir="${basedir}/publish/blackberry/sideloading/torch/70" overwrite="true" failonerror="false"/>
+								<copy file="${basedir}/build/luaj2me/blackberry47/dist/${appid}-bb-70-torch${prefix}.csl" todir="${basedir}/publish/blackberry/sideloading/torch/70" overwrite="true" failonerror="false"/>
+							</then>
+						</if>
+						<!-- END TORCH DEVICE-->
+						<!-- Large Touch Device -->
+						<available file="${basedir}/build/luaj2me/blackberry47/dist/${appid}-bb-70-largetouch${prefix}.cod" property="bb70largetouch.present" />
+						<echo message="bb70largetouch.present  :  ${bb70largetouch.present}" />
+						<if>
+							<equals arg1="${bb70largetouch.present}" arg2="true" />
+							<then>
+								<signjar file.name="${appid}-bb-70-largetouch${prefix}.cod" dir.name="blackberry47"/>
+
+								<!-- copy to publish folder -->
+								<mkdir dir="${basedir}/publish/blackberry/largetouch/70" />
+								<copy file="${basedir}/build/luaj2me/blackberry47/dist/${appid}-bb-70-largetouch${prefix}.jad" todir="${basedir}/publish/blackberry/largetouch/70" failonerror="false" />
+
+								<unzip src="${basedir}/build/luaj2me/blackberry47/dist/${appid}-bb-70-largetouch${prefix}.cod" dest="${basedir}/publish/blackberry/largetouch/70" overwrite="true" />
+							</then>
+						</if>
+						<!-- End Large Touch Device -->
+
+						<!-- Storm Device -->
+						<!--OS 7.0 publish files.... -->
+						<available file="${basedir}/build/luaj2me/blackberry47/dist/${appid}-bb-70-storm${prefix}.cod" property="bb70storm.present" />
+						<echo message="bb70storm.present  :  ${bb70storm.present}" />
+						<if>
+							<equals arg1="${bb70storm.present}" arg2="true" />
+							<then>
+
+								<signjar file.name="${appid}-bb-70-storm${prefix}.cod" dir.name="blackberry47"/>
+
+								<!-- copy to publish folder -->
+								<mkdir dir="${basedir}/publish/blackberry/storm/70" />
+								<copy file="${basedir}/build/luaj2me/blackberry47/dist/${appid}-bb-70-storm${prefix}.jad" todir="${basedir}/publish/blackberry/storm/70" failonerror="false" />
+
+								<unzip src="${basedir}/build/luaj2me/blackberry47/dist/${appid}-bb-70-storm${prefix}.cod" dest="${basedir}/publish/blackberry/storm/70" overwrite="true" />
+								<copy file="${basedir}/build/luaj2me/blackberry47/dist/${appid}-bb-70-storm${prefix}.cod" todir="${basedir}/publish/blackberry/sideloading/storm/70" overwrite="true" />
+								<copy file="${basedir}/build/luaj2me/blackberry47/dist/${appid}-bb-70-storm${prefix}.cso" todir="${basedir}/publish/blackberry/sideloading/storm/70" overwrite="true" failonerror="false"/>
+								<copy file="${basedir}/build/luaj2me/blackberry47/dist/${appid}-bb-70-storm${prefix}.csl" todir="${basedir}/publish/blackberry/sideloading/storm/70" overwrite="true" failonerror="false"/>
+							</then>
+						</if>
+						<!-- END Storm Device-->
+						<!-- Blackberry 41 Device -->
+						<!--
+					<replaceregexp file="${basedir}/${appid}-bb41${prefix}.jad" match="^(MIDlet-Version.+$)" replace="MIDlet-Version: ${appversion}" byline="true"/>
+					<copy file="${basedir}/${appid}-bb41${prefix}.jad" tofile="publish/blackberry41/${appid}-41.jad" failonerror="false"/>
+					<unzip src="${basedir}/${appid}-bb41${prefix}.cod" dest="publish/blackberry41" overwrite="true"/>
+					<replaceregexp file="publish/blackberry41/${appid}-41.jad" match="(^RIM-COD-URL[-]*[0-9]*)(:[ ]*)(.+$)" replace="\1: ${publishurl}/bbc?type=bb41&amp;appid=${appid}&amp;cod=\3" byline="true"/>
+					-->
+
+						<available file="build/bb10/bb10exe/bb10platformcode/arm/simulator/${appid}.bar" type="file" property="bb10barfile.present" />
+
+						<echo message=" bb10barfile location ${bb10barfile.present}" />
+						<if>
+							<equals arg1="${bb10barfile.present}" arg2="true" />
+							<then>
+								<copy todir="publish/blackberry/bb10" overwrite="true">
+									<fileset dir="build/bb10/bb10exe/bb10platformcode/arm/simulator" includes="*.bar" casesensitive="false" />
+								</copy>
+							</then>
+						</if>
+
+
+						<if>
+							<equals arg1="${plugin.mode}" arg2="nongui" />
+							<then>
+								<copy todir="${binaries.location}/blackberry">
+									<fileset dir="publish/blackberry" />
+								</copy>
+							</then>
+						</if>
+					</then>
+				</if>
+				<!--************************************* END <Blackberry> ***************************************-->
+
+
+				<!--************************************* START <WIN MobILE6x> ***************************************-->
+
+				<if>
+					<equals arg1="${winmobile6x}" arg2="true"/>
+					<then>
+						<echo message="i18n ${i18n.xml}"/>
+
+						<!-- COPY WINDOWS MOBILE RUNTIME -->
+						<!-- Copy the properties file so that the admin console displays the published app properties-->
+						<copy file="publish/version/app.properties" todir="publish/j2me/windows"/>
+						<!-- ant dir="build/luawinmobile/standard" target="release" inheritAll="false">
+						<property name="appurl" value="${publishurl}/a?a=${appid}"/>
+						<property name="appid" value="${appid}"/>
+						<property name="appname" value="${appname}"/>
+						<property name="plugin.loc" value="${plugin.loc}"/>
+						<property name="win.build.option" value="${win.build.option}"/>
+						<property name="i18n.xml" value="${i18n.xml}"/>
+					</ant>
+					<copy todir="publish/windows/standard" overwrite="true">
+						<fileset dir="build/luawinmobile/standard" includes="**/*.CAB" casesensitive="false"/>
+					</copy-->
+
+						<ant dir="build/luawinmobile6x/prof" target="release" inheritAll="false">
+							<property name="appurl" value="${publishurl}/a?a=${appid}"/>
+							<property name="appname" value="${appname}"/>
+							<property name="appid" value="${appid}"/>
+							<property name="plugin.loc" value="${plugin.loc}"/>
+							<property name="win.build.option" value="${win.build.option}"/>
+							<property name="i18n.xml" value="${i18n.xml}"/>
+						</ant>
+						<copy todir="publish/windows/prof" overwrite="true">
+							<fileset dir="build/luawinmobile6x/prof" includes="**/*.CAB" casesensitive="false"/>
+						</copy>
+
+						<ant dir="build/luawinmobile6x/prof65" target="release" inheritAll="false">
+							<property name="appurl" value="${publishurl}/a?a=${appid}"/>
+							<property name="appname" value="${appname}"/>
+							<property name="appid" value="${appid}"/>
+							<property name="plugin.loc" value="${plugin.loc}"/>
+							<property name="win.build.option" value="${win.build.option}"/>
+							<property name="i18n.xml" value="${i18n.xml}"/>
+						</ant>
+						<copy todir="publish/windows/prof65" overwrite="true">
+							<fileset dir="build/luawinmobile6x/prof65" includes="**/*.CAB" casesensitive="false"/>
+						</copy>
+						<if>
+							<equals arg1="${plugin.mode}" arg2="nongui"/>
+							<then>
+								<copy todir="${binaries.location}/windows">
+									<fileset dir="publish/windows"/>
+								</copy>
+							</then>
+						</if>
+					</then>
+				</if>
+
+				<!--************************************* END <WIN MobILE6x> ***************************************-->
+
+				<!--************************************* START <WIN MobILE7> ***************************************-->
+
+				<if>
+					<equals arg1="${winmobile}" arg2="true"/>
+					<then>
+						<available file="build/luawinmobile/windows7" type="dir" property="windows7.present" />
+						<if>
+							<equals arg1="${windows7.present}" arg2="true" />
+							<then>
+								<available file="build/luawinmobile/windows7/WP7.xap" type="file" property="wp7xapfile.present" />
+								<echo message=" wp7xapfile.present val ${wp7xapfile.present}" />
+
+								<if>
+									<equals arg1="${wp7xapfile.present}" arg2="true" />
+									<then>
+										<copy todir="publish/windows/windows7" overwrite="true">
+											<fileset dir="build/luawinmobile/windows7" includes="WP7.xap" casesensitive="false"/>
+										</copy>
+									</then>
+								</if>
+
+								<available file="build/luawinmobile/windows7/WP7Mango.xap" type="file" property="wp7mangoxapfile.present" />
+								<echo message=" wpmangoxapfile.present val ${wp7mangoxapfile.present}" />
+								<if>
+									<equals arg1="${wp7mangoxapfile.present}" arg2="true" />
+									<then>
+										<copy todir="publish/windows/windowsmango" overwrite="true">
+											<fileset dir="build/luawinmobile/windows7" includes="WP7Mango.xap" casesensitive="false"/>
+										</copy>
+									</then>
+								</if>
+							</then>
+						</if>
+						<if>
+							<equals arg1="${plugin.mode}" arg2="nongui"/>
+							<then>
+								<if>
+									<equals arg1="${wp7xapfile.present}" arg2="true" />
+									<then>
+										<copy todir="${binaries.location}/windows/windows7">
+											<fileset dir="publish/windows/windows7"/>
+										</copy>
+									</then>
+								</if>
+
+								<if>
+									<equals arg1="${wp7mangoxapfile.present}" arg2="true" />
+									<then>
+										<copy todir="${binaries.location}/windows/windowsmango">
+											<fileset dir="publish/windows/windowsmango"/>
+										</copy>
+									</then>
+								</if>
+							</then>
+						</if>
+
+					</then>
+				</if>
+
+				<!--************************************* END <WIN MobILE7> ***************************************-->
+
+				<!--************************************* START <WIN Phone8> ***************************************-->
+
+				<if>
+					<equals arg1="${winphone8}" arg2="true"/>
+					<then>
+						<available file="build/winphone8" type="dir" property="windowsphone8.present" />
+						<if>
+							<equals arg1="${windowsphone8.present}" arg2="true" />
+							<then>
+								<available file="build/winphone8/WindowsPhone8.xap" type="file" property="wphone8xapfile.present" />
+								<echo message=" wphone8xapfile.present val ${wphone8xapfile.present}" />
+
+								<if>
+									<equals arg1="${wphone8xapfile.present}" arg2="true" />
+									<then>
+										<copy todir="publish/windows/windowsphone8" overwrite="true">
+											<fileset dir="build/winphone8" includes="WindowsPhone8.xap,WindowsPhone8_ARM.xap" casesensitive="false"/>
+										</copy>
+									</then>
+								</if>
+							</then>
+						</if>
+
+
+						<if>
+							<equals arg1="${plugin.mode}" arg2="nongui"/>
+							<then>
+								<if>
+									<equals arg1="${wphone8xapfile.present}" arg2="true" />
+									<then>
+										<copy todir="${binaries.location}/windows/windowsphone8">
+											<fileset dir="publish/windows/windowsphone8"/>
+										</copy>
+									</then>
+								</if>
+
+							</then>
+						</if>
+					</then>
+				</if>
+
+				<!--************************************* END <WIN Phone8> ***************************************-->
+
+
+				<!--************************************* START <WIN Phone8.1> ***************************************-->
+
+				<if>
+					<equals arg1="${winphone81s}" arg2="true"/>
+					<then>
+						<available file="build/winphone8" type="dir" property="windowsphone81.present" />
+						<if>
+							<equals arg1="${windowsphone81.present}" arg2="true" />
+							<then>
+								<available file="build/winphone8/WindowsPhone81.xap" type="file" property="wphone81sxapfile.present" />
+								<echo message=" wphone81sxapfile.present val ${wphone81sxapfile.present}" />
+
+								<if>
+									<equals arg1="${wphone81sxapfile.present}" arg2="true" />
+									<then>
+										<copy todir="publish/windows/windowsphone81s" overwrite="true">
+											<fileset dir="build/winphone8" includes="WindowsPhone81.xap,WindowsPhone81_ARM.xap" casesensitive="false"/>
+										</copy>
+									</then>
+								</if>
+							</then>
+						</if>
+
+
+						<if>
+							<equals arg1="${plugin.mode}" arg2="nongui"/>
+							<then>
+								<if>
+									<equals arg1="${wphone81sxapfile.present}" arg2="true" />
+									<then>
+										<copy todir="${binaries.location}/windows/windowsphone81s">
+											<fileset dir="publish/windows/windowsphone81s"/>
+										</copy>
+									</then>
+								</if>
+
+							</then>
+						</if>
+					</then>
+				</if>
+
+				<!--************************************* END <WIN Phone8.1> ***************************************-->
+
+
+				<!--************************************* START <WIN Phone10> ***************************************-->
+
+				<if>
+					<equals arg1="${winphone10}" arg2="true"/>
+					<then>
+						<available file="build/windows10/Windows10Mobile/KonyApp/AppPackages " type="dir" property="windows10mobile.present" />
+						<if>
+							<equals arg1="${windows10mobile.present}" arg2="true" />
+							<then>
+								<available file="build/windows10/Windows10Mobile/KonyApp/AppPackages/ARM" type="dir" property="win10mobilearmappxfile.present" />
+								<echo message=" win10mobilearmappxfile.present val ${win10mobilearmappxfile.present}" />
+
+								<if>
+									<equals arg1="${win10mobilearmappxfile.present}" arg2="true" />
+									<then>
+										<copy todir="publish/windows/windows10mobile/ARM" overwrite="true">
+											<fileset dir="build/windows10/Windows10Mobile/KonyApp/AppPackages/ARM" includes="*.appx"  />
+										</copy>
+									</then>
+								</if>
+								
+								<available file="build/windows10/Windows10Mobile/KonyApp/AppPackages/x64" type="dir" property="win10mobilex64appxfile.present" />
+								<echo message=" win10mobilex64appxfile.present val ${win10mobilex64appxfile.present}" />
+
+								<if>
+									<equals arg1="${win10mobilex64appxfile.present}" arg2="true" />
+									<then>
+										<copy todir="publish/windows/windows10mobile/x64" overwrite="true">
+											<fileset dir="build/windows10/Windows10Mobile/KonyApp/AppPackages/x64" includes="*.appx"  />
+										</copy>
+									</then>
+								</if>								
+								<available file="build/windows10/Windows10Mobile/KonyApp/AppPackages/x86" type="dir" property="win10mobilex86appxfile.present" />
+									 <echo message=" win10mobilex86appxfile.present val ${win10mobilex86appxfile.present}" />
+
+										 	<if>
+										    	<equals arg1="${win10mobilex86appxfile.present}" arg2="true" />
+												 <then>
+												  <copy todir="publish/windows/windows10mobile/x86" overwrite="true">
+													 <fileset dir="build/windows10/Windows10Mobile/KonyApp/AppPackages/x86" includes="*.appx"  />
+													 </copy>
+												 </then>
+											 </if>										
+								
+								
+							</then>
+						</if>
+
+
+						<if>
+							<equals arg1="${plugin.mode}" arg2="nongui"/>
+							<then>
+								<if>
+									<or>
+										<equals arg1="${win10mobilearmappxfile.present}" arg2="true" />
+										<equals arg1="${win10mobilex64appxfile.present}" arg2="true" />
+										<equals arg1="${win10mobilex86appxfile.present}" arg2="true" />
+									</or>
+									<then>
+										<copy todir="${binaries.location}/windows/windows10mobile">
+											<fileset dir="publish/windows/windows10mobile"/>
+										</copy>
+									</then>
+								</if>
+							</then>
+						</if>
+
+					</then>
+				</if>
+
+				<!--************************************* END <WIN Phone 10> ***************************************-->
+
+				
+
+
+				<!--************************************* START <WINDOWS 8> ***************************************-->
+
+				<if>
+					<equals arg1="${windows8}" arg2="true"/>
+					<then>
+						<available file="build/windows8" type="dir" property="windows8.present" />
+						<if>
+							<equals arg1="${windows8.present}" arg2="true" />
+							<then>
+								<available file="build/windows8/Windows8/${appname}.appx" type="file" property="win8appxfile.present" />
+								<echo message=" win8appxfile.present val ${win8appxfile.present}" />
+
+								<if>
+									<equals arg1="${win8appxfile.present}" arg2="true" />
+									<then>
+										<copy todir="publish/windows/windows8" overwrite="true">
+											<fileset dir="build/windows8/Windows8" includes="${appname}.appx" casesensitive="false"/>
+										</copy>
+									</then>
+								</if>
+							</then>
+						</if>
+
+
+						<if>
+							<equals arg1="${plugin.mode}" arg2="nongui"/>
+							<then>
+								<if>
+									<equals arg1="${win8appxfile.present}" arg2="true" />
+									<then>
+										<copy todir="${binaries.location}/windows/windows8">
+											<fileset dir="publish/windows/windows8"/>
+										</copy>
+									</then>
+								</if>
+							</then>
+						</if>
+
+					</then>
+				</if>
+
+				<!--************************************* END < WINDOWS 8> ***************************************-->
+
+
+				<!--************************************* START <WINDOWS 10> ***************************************-->
+
+				<if>
+					<equals arg1="${windows10}" arg2="true"/>
+					<then>
+						<available file="build/windows10/Windows10/KonyApp/AppPackages " type="dir" property="windows10.present" />
+						<if>
+							<equals arg1="${windows10.present}" arg2="true" />
+							<then>
+								<available file="build/windows10/Windows10/KonyApp/AppPackages/ARM" type="dir" property="win10armappxfile.present" />
+								<echo message=" win10armappxfile.present val ${win10armappxfile.present}" />
+
+								<if>
+									<equals arg1="${win10armappxfile.present}" arg2="true" />
+									<then>
+										<copy todir="publish/windows/windows10/ARM" overwrite="true">
+											<fileset dir="build/windows10/Windows10/KonyApp/AppPackages/ARM" includes="*.appx"  />
+										</copy>
+									</then>
+								</if>
+								
+								<available file="build/windows10/Windows10/KonyApp/AppPackages/x64" type="dir" property="win10x64appxfile.present" />
+								<echo message=" win10x64appxfile.present val ${win10x64appxfile.present}" />
+
+								<if>
+									<equals arg1="${win10x64appxfile.present}" arg2="true" />
+									<then>
+										<copy todir="publish/windows/windows10/x64" overwrite="true">
+											<fileset dir="build/windows10/Windows10/KonyApp/AppPackages/x64" includes="*.appx"  />
+										</copy>
+									</then>
+								</if>								
+								<available file="build/windows10/Windows10/KonyApp/AppPackages/x86" type="dir" property="win10x86appxfile.present" />
+									 <echo message=" win10x86appxfile.present val ${win10x86appxfile.present}" />
+
+										 	<if>
+										    	<equals arg1="${win10x86appxfile.present}" arg2="true" />
+												 <then>
+												  <copy todir="publish/windows/windows10/x86" overwrite="true">
+													 <fileset dir="build/windows10/Windows10/KonyApp/AppPackages/x86" includes="*.appx"  />
+													 </copy>
+												 </then>
+											 </if>										
+								
+								
+							</then>
+						</if>
+
+
+						<if>
+							<equals arg1="${plugin.mode}" arg2="nongui"/>
+							<then>
+								<if>
+									<or>
+										<equals arg1="${win10x86appxfile.present}" arg2="true" />
+										<equals arg1="${win10x64appxfile.present}" arg2="true" />
+										<equals arg1="${win10armappxfile.present}" arg2="true" />
+									</or>
+									<then>
+										<copy todir="${binaries.location}/windows/windows10">
+											<fileset dir="publish/windows/windows10"/>
+										</copy>
+									</then>
+								</if>
+							</then>
+						</if>
+
+					</then>
+				</if>
+
+				<!--************************************* END < WINDOWS 10> ***************************************-->
+				
+				
+				<if>
+								<equals arg1="${spahybridbb}" arg2="true"/>
+								<then>
+									<available file="build/bb10/bb10exe/bb10platformcode/arm/device" type="dir" property="spahybridbb.present" />
+									<if>
+										<equals arg1="${spahybridbb.present}" arg2="true" />
+										<then>
+											<available file="build/bb10/bb10exe/bb10platformcode/arm/device/" type="dir" property="spahybridbbbarfile.present" />
+											<echo message=" spahybridbbbarfile.present val ${spahybridbbbarfile.present}" />
+
+											<if>
+												<equals arg1="${spahybridbbbarfile.present}" arg2="true" />
+												<then>
+													<copy todir="publish/spahybridbb" overwrite="true">
+														<fileset dir="build/bb10/bb10exe/bb10platformcode/arm/device" includes="*.bar"  />
+													</copy>
+												</then>
+											</if> 
+										</then>
+									</if>
+
+
+									<if>
+										<equals arg1="${plugin.mode}" arg2="nongui"/>
+										<then>
+											<if>
+												<equals arg1="${spahybridbbbarfile.present}" arg2="true" />
+												<then>
+													<copy todir="${binaries.location}/spahybridbb">
+														<fileset dir="publish/spahybridbb"/>
+													</copy>
+												</then>
+											</if>
+										</then>
+									</if>
+
+								</then>
+							</if>
+
+							<!--************************************* END < WINDOWS 10> ***************************************-->
+				
+
+
+				<!--************************************* START <Desktop> ***************************************-->
+
+				<if>
+					<equals arg1="${desktop_kiosk}" arg2="true" />
+					<then>
+						<available file="build/luawindows/kiosk" type="dir" property="desktop.present" />
+						<if>
+							<equals arg1="${desktop.present}" arg2="true" />
+							<then>
+								<copy todir="publish/desktop_kiosk" overwrite="true">
+									<fileset dir="build/luawindows/kiosk" includes="${projname}.exe" casesensitive="false" />
+								</copy>
+							</then>
+						</if>
+						<if>
+							<equals arg1="${plugin.mode}" arg2="nongui" />
+							<then>
+								<copy todir="${binaries.location}/desktop_kiosk">
+									<fileset dir="publish/desktop_kiosk" />
+								</copy>
+							</then>
+						</if>
+
+					</then>
+				</if>
+
+				<!--************************************* END <Desktop> ***************************************-->
+
+
+				<!--************************************* START <ANDROID> ***************************************-->
+
+				<if>
+					<equals arg1="${android}" arg2="true" />
+					<then>
+						<mkdir dir="publish/android"/>
+						<delete dir="${basedir}/build/luaandroid/publish" />
+						<mkdir dir="${basedir}/build/luaandroid/publish" />
+						<delete dir="${basedir}/build/luaandroid/publish/luavmandroid" />
+						<mkdir dir="${basedir}/build/luaandroid/publish/luavmandroid/assets" />
+
+						<copy file="${basedir}/build/luaandroid/dist/luavmandroid.apk" tofile="${basedir}/build/luaandroid/publish/luavmandroid.apk" overwrite="true" />
+						<!-- <copy file="${basedir}/build/luaandroid/application.properties" tofile="${basedir}/build/luaandroid/publish/application.properties" overwrite="true"/>
+					<replaceregexp file="${basedir}/build/luaandroid/publish/application.properties" match="^(App-URL.+$)" replace="App-URL=${publishurl}/s" byline="true"/>
+					
+				    <exec executable="${android.home}/tools/apkbuilder.bat" failonerror="true" failifexecutionfails="true">
+				         <arg value="${basedir}/build/luaandroid/publish/luavmandroid.apk"/> 
+				         <arg value="-v" /> 
+				         <arg value="-z" /> 
+				         <arg value="${basedir}/build/luaandroid/luavmandroid.apk"/>
+				         <arg value="-rf" /> 
+				         <arg value="${basedir}/build/luaandroid/publish/luavmandroid"/> 
+				    </exec> -->
+
+						<!-- ANDROID APK File-->
+						<copy todir="publish/android" overwrite="true">
+							<fileset dir="${basedir}/build/luaandroid/publish" includes="luavmandroid.apk" casesensitive="false"/>
+						</copy>
+						<if>
+							<equals arg1="${plugin.mode}" arg2="nongui"/>
+							<then>
+								<copy todir="${binaries.location}/android">
+									<fileset dir="publish/android"/>
+								</copy>
+							</then>
+						</if>
+
+					</then>
+				</if>
+
+				<!--************************************* END <ANDROID> ***************************************-->
+
+				<!--************************************* START <TABRCANDROID> ***************************************-->
+
+				<if>
+					<equals arg1="${tabrcandroid}" arg2="true"/>
+					<then>
+						<mkdir dir="publish/tabrcandroid"/>
+						<delete dir="${basedir}/build/luatabrcandroid/publish"/>
+						<mkdir dir="${basedir}/build/luatabrcandroid/publish"/>
+						<delete dir="${basedir}/build/luatabrcandroid/publish/luavmandroid"/>
+						<mkdir dir="${basedir}/build/luatabrcandroid/publish/luavmandroid/assets"/>
+
+						<copy file="${basedir}/build/luatabrcandroid/dist/luavmandroid.apk" tofile="${basedir}/build/luatabrcandroid/publish/luavmandroid.apk" overwrite="true"/>
+						<!-- <copy file="${basedir}/build/luaandroid/application.properties" tofile="${basedir}/build/luaandroid/publish/application.properties" overwrite="true"/>
+					<replaceregexp file="${basedir}/build/luaandroid/publish/application.properties" match="^(App-URL.+$)" replace="App-URL=${publishurl}/s" byline="true"/>
+					
+				    <exec executable="${android.home}/tools/apkbuilder.bat" failonerror="true" failifexecutionfails="true">
+				         <arg value="${basedir}/build/luaandroid/publish/luavmandroid.apk"/> 
+				         <arg value="-v" /> 
+				         <arg value="-z" /> 
+				         <arg value="${basedir}/build/luaandroid/luavmandroid.apk"/>
+				         <arg value="-rf" /> 
+				         <arg value="${basedir}/build/luaandroid/publish/luavmandroid"/> 
+				    </exec> -->
+
+						<!-- tabrcandroid APK File-->
+						<copy todir="publish/tabrcandroid" overwrite="true">
+							<fileset dir="${basedir}/build/luatabrcandroid/publish" includes="luavmandroid.apk" casesensitive="false"/>
+						</copy>
+						<if>
+							<equals arg1="${plugin.mode}" arg2="nongui"/>
+							<then>
+								<copy todir="${binaries.location}/tabrcandroid">
+									<fileset dir="publish/tabrcandroid"/>
+								</copy>
+							</then>
+						</if>
+
+					</then>
+				</if>
+
+				<!--************************************* END <tabrcandroid> ***************************************-->
+
+
+				<!--************************************* START <COPY the KBF Files> ***************************************-->
+				<available file="build/server/iphonekbf" type="dir" property="kbf.present"/>
+				<if>
+					<equals arg1="${kbf.present}" arg2="true"/>
+					<then>
+						<if>
+							<equals arg1="${plugin.mode}" arg2="nongui"/>
+							<then>
+								<copy todir="${binaries.location}/iphone">
+									<fileset dir="build/server/iphonekbf" includes="**/*.kbf,**/*.KAR"/>
+								</copy>
+							</then>
+						</if>
+					</then>
+				</if>
+
+				<available file="build/server/ipadkbf" type="dir" property="ipadkbf.present"/>
+				<if>
+					<equals arg1="${ipadkbf.present}" arg2="true"/>
+					<then>
+						<if>
+							<equals arg1="${plugin.mode}" arg2="nongui"/>
+							<then>
+								<copy todir="${binaries.location}/ipad">
+									<fileset dir="build/server/ipadkbf" includes="**/*.kbf,**/*.KAR"/>
+								</copy>
+							</then>
+						</if>
+					</then>
+				</if>
+
+				<available file="build/luaqt/konyrcc" type="dir" property="luaqtdir.present"/>
+				<if>
+					<equals arg1="${luaqtdir.present}" arg2="true"/>
+					<then>
+						<if>
+							<equals arg1="${plugin.mode}" arg2="nongui"/>
+							<then>
+								<copy todir="${binaries.location}/symbian/konyrcc">
+									<fileset dir="build/luaqt/konyrcc"/>
+								</copy>
+								<copy todir="${binaries.location}/symbian">
+									<fileset dir="build/luaqt" includes="luavmqt.exe"/>
+								</copy>
+							</then>
+						</if>
+					</then>
+				</if>
+
+				<!--************************************* END <COPY the KBF Files> ***************************************-->
+				<if>
+					<equals arg1="${plugin.mode}" arg2="gui"/>
+					<then>
+						<!-- mark rich client is avaliable in application.xml -->
+						<replaceregexp file="publish-web/application.xml" match="richclientwar" replace="${appid}.rwar" byline="true" flags="g"/>
+
+						<!-- Prajakt: Copy the landigpage folder from the res folder and include it in the packaging -->
+						<available file="${resfolder}/landingpage" type="dir" property="landingpage.defined"/>
+						<if>
+							<equals arg1="${landingpage.defined}" arg2="true" />
+							<then>
+								<mkdir dir="publish/landingpage"/>
+								<copy todir="publish/landingpage" overwrite="true" failonerror="true">
+									<fileset dir="${resfolder}/landingpage"/>
+								</copy>
+							</then>
+						</if>
+						<delete file="publish-web/platforms.properties"/>
+						<touch file="publish-web/platforms.properties"/>
+						<concat fixlastline="true" append="true" destfile="publish-web/platforms.properties">platforms=${platforms}</concat>
+						<zip destfile="publish-web/${appid}.rwar" basedir="publish"/>
+					</then>
+				</if>
+			</then>
+			<else>
+				<!-- mark rich client is not avaliable in application.xml -->
+				<replaceregexp file="publish-web/application.xml" match="richclientwar" replace="" byline="true" flags="g"/>
+			</else>
+		</if>
+
+		<if>
+			<equals arg1="${web}" arg2="true" />
+			<then>
+				<mkdir dir="publish/xhtml/"/>
+				<!-- Copy the properties file so that the admin console displays the published app properties-->
+				<copy file="publish/version/app.properties" todir="publish/xhtml"/>
+				<condition property="extensionOfWar" value="war" else="${warExtension}">
+					<equals arg1="${warExtension}" arg2="$${warExtension}"/>
+				</condition>
+				<copy file="${warFilePath}" tofile="publish/xhtml/${w.context}.${extensionOfWar}" failonerror="false"/>
+				<copy file="${warFilePath}" tofile="publish-web/${w.context}.${extensionOfWar}" failonerror="false"/>
+				<replaceregexp file="publish-web/application.xml" match="wapwar" replace="${w.context}.${extensionOfWar}" byline="true" flags="g"/>
+				<if>
+					<equals arg1="${plugin.mode}" arg2="nongui"/>
+					<then>
+						<copy todir="${binaries.location}/web">
+							<fileset dir="publish-web" includes="*.${extensionOfWar}"/>
+						</copy>
+					</then>
+				</if>
+			</then>
+			<else>
+				<replaceregexp file="publish-web/application.xml" match="wapwar" replace="" byline="true" flags="g"/>
+			</else>
+		</if>
+
+		<if>
+			<or>
+				<equals arg1="${j2me}" arg2="true"/>
+				<equals arg1="${bb}" arg2="true"/>
+				<equals arg1="${android}" arg2="true"/>
+				<equals arg1="${iphone}" arg2="true"/>
+				<equals arg1="${winmobile}" arg2="true"/>
+				<equals arg1="${winphone8}" arg2="true"/>
+				<equals arg1="${windows8}" arg2="true"/>
+				<equals arg1="${winmobile6x}" arg2="true"/>
+				<equals arg1="${winmobilemango}" arg2="true"/>
+				<equals arg1="${web}" arg2="true" />
+				<equals arg1="${ipad}" arg2="true"/>
+				<equals arg1="${desktop_kiosk}" arg2="true"/>
+				<equals arg1="${symbian}" arg2="true"/>
+			</or>
+			<then>
+				<if>
+					<equals arg1="${plugin.mode}" arg2="gui"/>
+					<then>
+						<zip destfile="${appid}.mwar" basedir="publish-web"/>
+						<echo message="After Successful Application publish it can be accessed using the below links:"/>
+						<echo message="For iPhone native app KBF/KAR: ${publishurl}/dd?appid=${appid}"/>
+						<echo message="For non-iPhone native app binaries: ${publishurlwithoutadmin}/appdownload/download?appid=${appid}"/>
+
+
+						<if>
+							<equals arg1="${desktop_web}" arg2="true" />
+							<then>
+								<if>
+									<equals arg1="${iswebselected}" arg2="false" />
+									<then>
+										<echo message="For Desktop web: ${publishurlwithoutadmin}/${w.context}/p" />
+									</then>
+									<else>
+										<echo message="For Mobile web: ${publishurlwithoutadmin}/${w.context}/p" />
+									</else>
+								</if>
+							</then>
+						</if>
+					</then>
+				</if>
+			</then>
+			<else>
+				<echo message="Rich Client(s) or Web is not selected in code generation wizard. Applicaton file is not generated" />
+			</else>
+		</if>
+
+	</target>
+
+	<target name="publish-services" depends="commoninit">
+		<!--<property name="javahome" value="C:/Program Files/Java/jdk1.6.0_03"/>
+
+			<property name="jdehome" value="C:/Program Files/Research In Motion/BlackBerry JDE 4.2.1"/>
+
+			<property name="appname" value="test1"/>
+
+			<property name="publishurl" value="http://localhost:8080"/> -->
+
+		<delete dir="publish-services" failonerror="true"/>
+
+		<delete file="services.mwar" failonerror="true"/>
+
+		<mkdir dir="publish-services"/>
+
+		<copy file="build/application-template.xml" tofile="publish-services/application.xml"/>
+		<replaceregexp file="publish-services/application.xml" match="&gt;appid&lt;" replace="&gt;${appid}&lt;" byline="true" flags="g"/>
+
+		<replaceregexp file="publish-services/application.xml" match="&gt;servicedef&lt;" replace="&gt;servicedef.xml&lt;" byline="true" flags="g"/>
+
+		<replaceregexp file="publish-services/application.xml" match="smswar" replace="" byline="true" flags="g"/>
+
+		<replaceregexp file="publish-services/application.xml" match="wapwar" replace="" byline="true" flags="g"/>
+
+		<replaceregexp file="publish-services/application.xml" match="richclientwar" replace="" byline="true" flags="g"/>
+
+		<copy file="${svc.file}" tofile="publish-services/servicedef.xml"/>
+
+		<!-- constants defined in  com.pat.tool.keditor.tasks.TServicePublish  -->
+		<copypropertyfiles service.location="${sap.location}"/>
+		<copypropertyfiles service.location="${siebel.location}"/>
+		<copypropertyfiles service.location="${mainframe.location}"/>
+
+		<!-- Scrapper Integration -->
+		<if>
+			<equals arg1="${dsl.exists}" arg2="true" />
+			<then>
+				<copy file="${dsl.zip}" tofile="publish-services/${appid}.zip" overwrite="true" failonerror="false"/>
+			</then>
+		</if>
+
+		<tstamp/>
+		<replaceregexp file="publish-services/servicedef.xml" match="&lt;application(.+?)&gt;" replace="&lt;application id=&quot;${appid}&quot; smscode=&quot;${smscode}&quot; name=&quot;${appname}&quot; version=&quot;${appversion}&quot; vendor=&quot;${vendorname}&quot; platform-version=&quot;1.0.0&quot; ipaddress=&quot;${ipaddress}&quot; lastupdated=&quot;${DSTAMP}.${TSTAMP}&quot;&gt;" byline="true" flags="g"/>
+
+
+		<!--<replaceregexp file="publish-services/servicedef.xml"
+                          match="&lt;app-config.+&lt;/app-config&gt;"
+                          replace="&lt;app-config&gt;&lt;name&gt;${appname}&lt;/name&gt;&lt;version&gt;${appversion}&lt;/version&gt;&lt;vendor&gt;${vendorname}&lt;/vendor&gt;&lt;platform-version&gt;0.0.1&lt;/platform-version&gt;&lt;lastupdated&gt;${DSTAMP}.${TSTAMP}&lt;/lastupdated&gt;&lt;/app-config&gt;"
+                          flags="s"/>
+
+ 			<replaceregexp file="publish-services/servicedef.xml"
+                          match="&lt;app-config/&gt;"
+                          replace="&lt;app-config&gt;&lt;name&gt;${appname}&lt;/name&gt;&lt;version&gt;${appversion}&lt;/version&gt;&lt;vendor&gt;${vendorname}&lt;/vendor&gt;&lt;platform-version&gt;0.0.1&lt;/platform-version&gt;&lt;lastupdated&gt;${DSTAMP}.${TSTAMP}&lt;/lastupdated&gt;&lt;/app-config&gt;"
+                          flags="s"/>-->
+
+		<zip destfile="services.mwar" basedir="publish-services"/>
+
+	</target>
+
+	<target name="cleani18nfolder">
+		<echo message="Cleaning i18n folder.."/>
+		<delete includeemptydirs="true">
+			<fileset dir="${i18n.dir}"/>
+		</delete>
+		<echo message="Cleaning i18n folder is successfull"/>
+	</target>
+
+	<target name="createdir">
+		<taskdef resource="net/sf/antcontrib/antcontrib.properties">
+			<classpath>
+				<pathelement location="${plugin.loc}/lib/ant-contrib-1.0b3.jar" />
+			</classpath>
+		</taskdef>
+		<if>
+			<or>
+				<equals arg1="${android.isIncrementalBuild}" arg2="true" />
+				<equals arg1="${androidTab.isIncrementalBuild}" arg2="true" />
+			</or>
+			<then>
+				<if>
+					<equals arg1="${fpreview.exist}" arg2="true" />
+						<then>
+							<delete includeemptydirs="true">
+							<fileset dir="${clean.dir}" excludes="**/*fpreview/,**/*build/" includes = "**/*"/>
+							</delete>
+						</then>
+					<else>
+						<delete includeemptydirs="true">
+							<fileset dir="${clean.dir}" excludes="**/*build/" includes = "**/*"/>
+						</delete>
+					</else>
+					</if>
+				</then>
+		<elseif>
+			<equals arg1="${fpreview.exist}" arg2="true" />
+				<then>
+					<delete includeemptydirs="true">
+						<fileset dir="${clean.dir}" excludes="**/*fpreview/" includes = "**/*"/>
+					</delete>
+				</then>
+		</elseif>
+		<else>
+			<delete includeemptydirs="true">
+				<fileset dir="${clean.dir}"/>
+			</delete>
+			<mkdir dir="${clean.dir}" />
+		</else>
+		</if>
+	</target>
+
+	<target name="killadb" depends="commoninit">
+		<if>
+			<equals arg1="${os.family}" arg2="windows"/>
+			<then>
+				<exec executable="cmd.exe" failonerror="false" failifexecutionfails="false">
+					<arg line='taskkill /IM "adb.exe" /F'/>
+				</exec>
+			</then>
+			<else>
+				<exec-shell executable="cmd" failonerror="false" failifexecutionfails="false">
+					<arg line='/c "killall adb"'/>
+				</exec-shell>
+			</else>
+		</if>
+	</target>
+
+	<target name="cleanwebapps">
+		<delete includeemptydirs="true">
+			<fileset dir="${clean.dir}" includes="**/*" excludes="${exclude.wars},node_modules/**/*,META-INF/**/*,cert/**/*,serverconfig.js,server.js,log4js.json,index.js,*.tpartypluginversion,*.webcommonpluginversion,*.tcpluginversion,*.spapluginversion,*.desktopwebpluginversion"/>
+		</delete>
+	</target>
+
+	<target name="createtcfolders">
+		<mkdir dir="${res.folder}/mobile/web"/>
+		<property name="tc.folder" value="${res.folder}/mobile/web"/>
+		<mkdir dir="${tc.folder}/normal"/>
+		<mkdir dir="${tc.folder}/medium"/>
+		<mkdir dir="${tc.folder}/small"/>
+		<mkdir dir="${tc.folder}/adviphone"/>
+		<mkdir dir="${tc.folder}/advpalm"/>
+		<mkdir dir="${tc.folder}/advnth"/>
+		<mkdir dir="${tc.folder}/advandroid"/>
+		<mkdir dir="${tc.folder}/advandroid/images240"/>
+		<mkdir dir="${tc.folder}/advandroid/images320"/>
+		<mkdir dir="${tc.folder}/advandroid/images480"/>
+		<mkdir dir="${tc.folder}/advother"/>
+		<mkdir dir="${tc.folder}/bjs"/>
+		<mkdir dir="${tc.folder}/bjs/images240"/>
+		<mkdir dir="${tc.folder}/bjs/images320"/>
+		<mkdir dir="${tc.folder}/bjs/images480"/>
+
+		<move todir="${tc.folder}/normal" failonerror="false">
+			<fileset dir="${res.folder}/normal"/>
+		</move>
+		<move todir="${tc.folder}/medium" failonerror="false">
+			<fileset dir="${res.folder}/medium"/>
+		</move>
+		<move todir="${tc.folder}/small" failonerror="false">
+			<fileset dir="${res.folder}/small"/>
+		</move>
+		<move todir="${tc.folder}/adviphone" failonerror="false">
+			<fileset dir="${res.folder}/adviphone"/>
+		</move>
+		<move todir="${tc.folder}/advpalm" failonerror="false">
+			<fileset dir="${res.folder}/advpalm"/>
+		</move>
+		<move todir="${tc.folder}/advnth" failonerror="false">
+			<fileset dir="${res.folder}/advnth"/>
+		</move>
+		<move todir="${tc.folder}/advother" failonerror="false">
+			<fileset dir="${res.folder}/advother"/>
+		</move>
+		<move todir="${tc.folder}/bjs/images240" failonerror="false">
+			<fileset dir="${res.folder}/bjs/images240"/>
+		</move>
+		<move todir="${tc.folder}/bjs/images320" failonerror="false">
+			<fileset dir="${res.folder}/bjs/images320"/>
+		</move>
+		<move todir="${tc.folder}/bjs/images480" failonerror="false">
+			<fileset dir="${res.folder}/bjs/images480"/>
+		</move>
+		<move todir="${tc.folder}/bjs" failonerror="false">
+			<fileset dir="${res.folder}/bjs"/>
+		</move>
+		<move todir="${tc.folder}/advandroid/images240" failonerror="false">
+			<fileset dir="${res.folder}/advandroid/images240"/>
+		</move>
+		<move todir="${tc.folder}/advandroid/images320" failonerror="false">
+			<fileset dir="${res.folder}/advandroid/images320"/>
+		</move>
+		<move todir="${tc.folder}/advandroid/images480" failonerror="false">
+			<fileset dir="${res.folder}/advandroid/images480"/>
+		</move>
+		<move todir="${tc.folder}/advandroid" failonerror="false">
+			<fileset dir="${res.folder}/advandroid"/>
+		</move>
+		<delete dir="${res.folder}/normal" includeemptydirs="true" failonerror="false"/>
+		<delete dir="${res.folder}/medium" includeemptydirs="true" failonerror="false"/>
+		<delete dir="${res.folder}/small" includeemptydirs="true" failonerror="false"/>
+		<delete dir="${res.folder}/adviphone" includeemptydirs="true" failonerror="false"/>
+		<delete dir="${res.folder}/advpalm" includeemptydirs="true" failonerror="false"/>
+		<delete dir="${res.folder}/advnth" includeemptydirs="true" failonerror="false"/>
+		<delete dir="${res.folder}/advandroid" includeemptydirs="true" failonerror="false"/>
+		<delete dir="${res.folder}/advother" includeemptydirs="true" failonerror="false"/>
+		<delete dir="${res.folder}/bjs" includeemptydirs="true" failonerror="false"/>
+	</target>
+
+	<target name="creatercfolders">
+		<mkdir dir="${res.folder}/mobile/native"/>
+		<mkdir dir="${res.folder}/tablet/native"/>
+		<property name="rc.folder" value="${res.folder}/mobile/native"/>
+		<property name="rctablet.folder" value="${res.folder}/tablet/native"/>
+
+		<mkdir dir="${rc.folder}/iphone"/>
+		<mkdir dir="${rc.folder}/blackberry"/>
+		<mkdir dir="${rc.folder}/winmobile"/>
+		<mkdir dir="${rc.folder}/winphone8"/>
+		<mkdir dir="${rctablet.folder}/windows8"/>
+		<mkdir dir="${rc.folder}/android"/>
+		<mkdir dir="${rc.folder}/j2me"/>
+		<mkdir dir="${rc.folder}/palm"/>
+		<mkdir dir="${rc.folder}/symbian"/>
+		<mkdir dir="${rctablet.folder}/ipad"/>
+
+		<move todir="${rc.folder}/iphone" failonerror="false">
+			<fileset dir="${res.folder}/iphone"/>
+		</move>
+		<move todir="${rc.folder}/blackberry" failonerror="false">
+			<fileset dir="${res.folder}/blackberry"/>
+		</move>
+		<move todir="${rc.folder}/winmobile" failonerror="false">
+			<fileset dir="${res.folder}/winmobile"/>
+		</move>
+		<move todir="${rc.folder}/winphone8" failonerror="false">
+			<fileset dir="${res.folder}/winphone8"/>
+		</move>
+		<move todir="${rc.folder}/windows8" failonerror="false">
+			<fileset dir="${res.folder}/windows8"/>
+		</move>
+		<move todir="${rc.folder}/android" failonerror="false">
+			<fileset dir="${res.folder}/android"/>
+		</move>
+		<move todir="${rc.folder}/j2me" failonerror="false">
+			<fileset dir="${res.folder}/j2me"/>
+		</move>
+		<move todir="${rc.folder}/palm" failonerror="false">
+			<fileset dir="${res.folder}/palm"/>
+		</move>
+		<move todir="${rc.folder}/symbian" failonerror="false">
+			<fileset dir="${res.folder}/symbian"/>
+		</move>
+		<move todir="${rctablet.folder}/ipad" failonerror="false">
+			<fileset dir="${res.folder}/ipad"/>
+		</move>
+
+		<delete dir="${res.folder}/iphone" includeemptydirs="true" failonerror="false"/>
+		<delete dir="${res.folder}/blackberry" includeemptydirs="true" failonerror="false"/>
+		<delete dir="${res.folder}/winmobile" includeemptydirs="true" failonerror="false"/>
+		<delete dir="${res.folder}/winphone8" includeemptydirs="true" failonerror="false"/>
+		<delete dir="${res.folder}/windows8" includeemptydirs="true" failonerror="false"/>
+		<delete dir="${res.folder}/android" includeemptydirs="true" failonerror="false"/>
+		<delete dir="${res.folder}/j2me" includeemptydirs="true" failonerror="false"/>
+		<delete dir="${res.folder}/palm" includeemptydirs="true" failonerror="false"/>
+		<delete dir="${res.folder}/symbian" includeemptydirs="true" failonerror="false"/>
+		<delete dir="${res.folder}/ipad" includeemptydirs="true" failonerror="false"/>
+	</target>
+
+	<target name="createcommonfolders">
+		<mkdir dir="${res.folder}/common"/>
+		<property name="common.folder" value="${res.folder}/common"/>
+		<move todir="${common.folder}">
+			<fileset dir="${res.folder}" includes="*.*"/>
+		</move>
+	</target>
+
+	<target name="seperatefolders" depends="init, createcommonfolders, creatercfolders, createtcfolders"/>
+
+
+	<target name="restructure_resource_folder" depends="init">
+		<available file="${res.folder}/mobilerichclient" type="dir" property="mobile.rich"/>
+		<if>
+			<equals arg1="${mobile.rich}" arg2="true"/>
+			<then>
+				<move todir="${res.folder}/mobile/native" failonerror="false">
+					<fileset dir="${res.folder}/mobilerichclient"/>
+				</move>
+				<delete dir="${res.folder}/mobilerichclient" includeemptydirs="true" failonerror="false"/>
+			</then>
+		</if>
+
+		<available file="${res.folder}/mobilethinclient" type="dir" property="mobile.thin"/>
+		<if>
+			<equals arg1="${mobile.thin}" arg2="true"/>
+			<then>
+				<move todir="${res.folder}/mobile/web" failonerror="false">
+					<fileset dir="${res.folder}/mobilethinclient"/>
+				</move>
+				<delete dir="${res.folder}/mobilethinclient" includeemptydirs="true" failonerror="false"/>
+			</then>
+		</if>
+
+		<available file="${res.folder}/tabletrichclient" type="dir" property="tablet.rich"/>
+		<if>
+			<equals arg1="${tablet.rich}" arg2="true"/>
+			<then>
+				<move todir="${res.folder}/tablet/native" failonerror="false">
+					<fileset dir="${res.folder}/tabletrichclient"/>
+				</move>
+				<delete dir="${res.folder}/tabletrichclient" includeemptydirs="true" failonerror="false"/>
+			</then>
+		</if>
+
+		<available file="${res.folder}/tabletthinclient" type="dir" property="tablet.thin"/>
+		<if>
+			<equals arg1="${tablet.thin}" arg2="true"/>
+			<then>
+				<move todir="${res.folder}/tablet/web" failonerror="false">
+					<fileset dir="${res.folder}/tabletthinclient"/>
+				</move>
+				<delete dir="${res.folder}/tabletthinclient" includeemptydirs="true" failonerror="false"/>
+			</then>
+		</if>
+
+		<available file="${res.folder}/desktop/kiosk" type="dir" property="desktop.rich"/>
+		<if>
+			<equals arg1="${desktop.rich}" arg2="true"/>
+			<then>
+				<move todir="${res.folder}/desktop/native/kiosk" failonerror="false">
+					<fileset dir="${res.folder}/desktop/kiosk"/>
+				</move>
+				<delete dir="${res.folder}/desktop/kiosk" includeemptydirs="true" failonerror="false"/>
+			</then>
+		</if>
+		<available file="${res.folder}/desktop/desktopweb" type="dir" property="desktop.thin"/>
+		<if>
+			<equals arg1="${desktop.thin}" arg2="true"/>
+			<then>
+				<move todir="${res.folder}/desktop/web/desktopweb" failonerror="false">
+					<fileset dir="${res.folder}/desktop/desktopweb"/>
+				</move>
+				<delete dir="${res.folder}/desktop/desktopweb" includeemptydirs="true" failonerror="false"/>
+			</then>
+		</if>
+		<available file="${res.folder}/desktop_kiosk" type="dir" property="desktop.kiosk"/>
+		<if>
+			<equals arg1="${desktop.kiosk}" arg2="true"/>
+			<then>
+				<copy todir="${res.folder}/desktop/native/kiosk" failonerror="false">
+					<fileset dir="${res.folder}/desktop_kiosk"/>
+				</copy>
+				<delete dir="${res.folder}/desktop_kiosk" includeemptydirs="true" failonerror="false"/>
+			</then>
+		</if>
+		<available file="${res.folder}/desktopweb" type="dir" property="desktop.web"/>
+		<if>
+			<equals arg1="${desktop.web}" arg2="true"/>
+			<then>
+				<copy todir="${res.folder}/desktop/web/desktopweb" failonerror="false">
+					<fileset dir="${res.folder}/desktopweb"/>
+				</copy>
+				<delete dir="${res.folder}/desktopweb" includeemptydirs="true" failonerror="false"/>
+			</then>
+		</if>
+	</target>
+
+	<target name="midlog4jtarget" depends="commoninit">
+		<mkdir dir="${workspace.loc}/middleware/middleware-bootconfig/tc"/>
+
+		<if>
+			<equals arg1="${log4jfile.exists}" arg2="false" />
+			<then>
+				<copy todir="${workspace.loc}/middleware">
+					<fileset dir="${plugin.loc}/middleware"/>
+				</copy>
+			</then>
+		</if>
+
+		<if>
+			<equals arg1="${middlewarefile.exists}" arg2="false" />
+			<then>
+				<echo message="Copying middleware.properties file..."/>
+				<copy todir="${workspace.loc}/middleware/middleware-bootconfig">
+					<fileset dir="${plugin.loc}/middleware/middleware-bootconfig" includes="middleware.properties"/>
+				</copy>
+			</then>
+		</if>
+		<replace file="${workspace.loc}/middleware/middleware-bootconfig/middleware.properties" token="ssl.trustStore=&lt;java.home&gt;/truststore.jks" value="ssl.trustStore=">
+		</replace>
+		<replace file="${workspace.loc}/middleware/middleware-bootconfig/middleware.properties" token="ssl.keyStore=&lt;java.home&gt;/keystore.jks" value="ssl.keyStore=">
+		</replace>
+
+		<if>
+			<equals arg1="${thinplugin.avaliable}" arg2="true" />
+			<then>
+				<!-- copy tcvalidationlistener -->
+				<!-- copy todir="${workspace.loc}/middleware/middleware-bootconfig/tc" overwrite="true">
+					<fileset dir="${thinplugin.loc}/tc/wap" includes="deviceDetectionLogic.xml"/>
+				</copy-->
+
+				<!-- copy lib to jettydeploy folder -->
+				<echo message="Copying thinclient jar files to jetty lib"/>
+				<copy todir="${plugin.loc}/jettydeploy/lib" overwrite="true">
+					<fileset dir="${thinplugin.loc}/tcmiddleware"  includes="*.jar" excludes="KonyLuaVM.jar,KonyLogger.jar"/>
+					<fileset dir="${thinplugin.loc}/tc/lib"  includes="konyweblib.jar,konydevicecentralclient.jar,konydevicecentralcommons.jar,KonyLuaVM-Jetty.jar"/>
+				</copy>
+			</then>
+		</if>
+
+		<if>
+			<equals arg1="${webcommons.available}" arg2="true" />
+			<then>
+				<!-- copy lib to jettydeploy folder -->
+				<echo message="Copying thinclient jar files to jetty lib"/>
+				<copy todir="${plugin.loc}/jettydeploy/lib" overwrite="true">
+					<fileset dir="${webcommons.plugin.loc}/konywebcommonslib"  includes="*.jar"/>
+				</copy>
+				<available file="${webcommons.plugin.loc}/common/wap/deviceDetectionLogic.xml" property="device.present"/>
+				<if>
+					<equals arg1="${device.present}" arg2="true" />
+					<then>
+						<copy todir="${workspace.loc}/middleware/middleware-bootconfig/tc" overwrite="true">
+							<fileset dir="${webcommons.plugin.loc}/common/wap" includes="deviceDetectionLogic.xml"/>
+						</copy>
+					</then>
+				</if>
+			</then>
+		</if>
+
+	</target>
+	
+	<target name="bb10HybridPackage">
+		<delete dir="${bb10hybridloc}/jsoutput/hybridbb10"/>
+		<mkdir dir="${bb10hybridloc}/jsoutput/hybridbb10"/>
+		<echo message="Starting BB10 Packaging --"/>
+			<copy todir="${bb10hybridloc}/jsoutput/hybridbb10" overwrite="true">
+				<fileset dir="${bb10hybridloc}/jsoutput/spablackberry"  excludes="*.jsp"/>
+			</copy>
+			<copy todir="${bb10hybridloc}/jsoutput/hybridbb10" overwrite="true">
+					<fileset dir="${bb10hybridloc}/jsoutput/spablackberrywrapper"   />
+				</copy>
+	</target>
+	
+	
+
+	<macrodef name="signjar">
+		<attribute name="dir.name" default="blackberry"/>
+		<attribute name="file.name" default=""/>
+		<sequential>
+			<echo message="Signing jar.."/>
+			<if>
+				<equals arg1="${plugin.mode}" arg2="gui" />
+				<then>
+					<exec executable="${basedir}/build/bbsig.bat" failonerror="true" failifexecutionfails="true">
+						<arg value="${javahome}/jre/bin/java" />
+						<arg value="${basedir}/build/SignatureTool.jar" />
+						<arg value="${basedir}/build/luaj2me/@{dir.name}/dist/@{file.name}" />
+					</exec>
+				</then>
+			</if>
+		</sequential>
+	</macrodef>
+	<macrodef name="copypropertyfiles">
+		<attribute name="service.location" default=""/>
+		<sequential>
+			<echo message="Copying property files from '@{service.location}'"/>
+			<available file="@{service.location}" type="dir" property="service.present"/>
+			<if>
+				<equals arg1="${service.present}" arg2="true" />
+				<then>
+					<copy todir="publish-services">
+						<fileset dir="@{service.location}" includes="*.properties"/>
+					</copy>
+				</then>
+			</if>
+		</sequential>
+	</macrodef>
+</project>

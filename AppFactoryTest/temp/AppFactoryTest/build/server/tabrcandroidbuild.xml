@@ -1,0 +1,263 @@
+<!--@Note: This is read only file and not being used at runtime,if we want to update anything do it in zip file \trunk\guieditor\lib\build.zip -->
+<project name="Kony" basedir="." default="build">
+
+	<target name="build">
+
+		<unset name="logo"/>
+		<var name="logo" value="${logo_ipad}"/>
+		<unset name="splash.image"/>
+		<var name="splash.image" value="${splash.image_tabrcandroid}"/>
+
+
+		<delete dir="${codedir}" failonerror="false"/>
+		<mkdir dir="${codedir}"/>
+
+		<if>
+			<equals arg1="${tabrcandroid.hybridmode}" arg2="mixed"/>
+			<then>
+				<copy todir="${codedir}" overwrite="true">
+					<fileset dir="../../${outputdir}/${codedir}hybrid/tablet" excludes="startup.lua,tcchannel.lua,rcchannel.lua" casesensitive="false"/>
+				</copy>
+				<if>
+					<equals arg1="${dev.language}" arg2="${codedir}"/>
+					<then>
+						<copy todir="${codedir}" overwrite="true">
+							<fileset dir="../../${outputdir}/${codedir}hybrid" includes="appskins.${codedir}">
+							</fileset>
+						</copy>
+					</then>
+				</if>
+				<available file="../../${outputdir}/${codedir}hybrid/tablet/andriodtab" type="dir" property="tabandroidlua.present"/>
+				<if>
+					<equals arg1="${tabandroidlua.present}" arg2="true" />
+					<then>
+						<copy todir="${codedir}" overwrite="true">
+							<fileset dir="../../${outputdir}/${codedir}hybrid/tablet/andriodtab" excludes="startup.lua,tcchannel.lua,rcchannel.lua" casesensitive="false"/>
+						</copy>
+					</then>
+				</if>
+			</then>
+			<else>
+				<if>
+					<equals arg1="${tabrcandroid.hybridmode}" arg2="native"/>
+					<then>
+						<copy todir="${codedir}" overwrite="true">
+							<fileset dir="../../${outputdir}/${codedir}/tablet" excludes="startup.lua,tcchannel.lua,rcchannel.lua" casesensitive="false"/>
+							<fileset dir="../../${outputdir}/${codedir}" includes="appskins.${codedir}" casesensitive="false"/>
+							<fileset dir="../../${outputdir}/${codedir}" includes="${project.name}globalsequences.${codedir}" casesensitive="false"/>
+						</copy>
+						<available file="../../${outputdir}/${codedir}/tablet/andriodtab" type="dir" property="tabandroidlua.present"/>
+						<if>
+							<equals arg1="${tabandroidlua.present}" arg2="true" />
+							<then>
+								<copy todir="${codedir}" overwrite="true">
+									<fileset dir="../../${outputdir}/${codedir}/tablet/andriodtab" excludes="startup.lua,tcchannel.lua,rcchannel.lua" casesensitive="false"/>
+								</copy>
+							</then>
+						</if>
+					</then>
+					<else>
+						<copy todir="${codedir}" overwrite="true">
+							<fileset dir="../../${outputdir}/${codedir}wrapper/tablet" excludes="startup.lua,tcchannel.lua,rcchannel.lua" casesensitive="false"/>
+							<fileset dir="../../${outputdir}/${codedir}wrapper" includes="appskins.${codedir}" casesensitive="false"/>
+						</copy>
+						<available file="../../${outputdir}/${codedir}wrapper/tablet/andriodtab" type="dir" property="wrappertabandroidlua.present"/>
+						<if>
+							<equals arg1="${wrappertabandroidlua.present}" arg2="true" />
+							<then>
+								<copy todir="${codedir}" overwrite="true">
+									<fileset dir="../../${outputdir}/${codedir}wrapper/tablet/andriodtab" excludes="startup.lua,tcchannel.lua,rcchannel.lua" casesensitive="false"/>
+								</copy>
+							</then>
+						</if>
+					</else>
+				</if>
+			</else>
+		</if>
+
+		<delete dir="tabrcandroid"/>
+		<mkdir dir="tabrcandroid"/>
+		<mkdir dir="tabrcandroid/temp"/>
+		<delete dir ="resources"/>
+		<mkdir dir="resources"/>
+
+		<copy todir="resources" overwrite="true">
+			<fileset dir="${resfolder}/common" includes="*.*,${reslocale.str}"/>
+			<fileset dir="${resfolder}/tablet/common" includes="*.*,${reslocale.str}"/>
+			<fileset dir="${i18n.properties}" includes="**/*.prop" casesensitive="false"/>
+		</copy>
+
+		<!-- <available file="${fonts_workspace}/Android" type="dir" property="workspacefonts.present" /> 
+        <if>
+            <equals arg1="${workspacefonts.present}" arg2="true" /> 
+            <then>
+                <copy todir="resources" overwrite="true">
+                    <fileset dir="${fonts_workspace}/Android" includes="*.ttf"/>
+                </copy>
+            </then>
+        </if> -->
+
+		<if>
+			<equals arg1="${isVizProj}" arg2="true"/>
+			<then>
+				<copy todir="resources" overwrite="true">
+					<fileset dir="${resfolder}/tablet/native/androidtab" />
+				</copy>
+			</then>
+			<else>
+				<copy todir="resources" overwrite="true">
+					<fileset dir="${resfolder}/tablet/native/andriodtab" />
+				</copy>
+			</else>
+		</if>
+
+
+
+		<available file="${resfolder}/fonts/tablet/Android" type="dir" property="fonts.present" />
+		<if>
+			<equals arg1="${fonts.present}" arg2="true" />
+			<then>
+				<copy todir="${resfolder}" overwrite="true">
+					<fileset dir="${resfolder}/fonts/tablet/Android" includes="*.ttf"/>
+				</copy>
+			</then>
+		</if>
+
+
+		<if>
+			<equals arg1="${tabrcandroid.hybridmode}" arg2="mixed"/>
+			<then>
+				<condition property="luasrcHybridAndroidTablet" value="hybrid/nativeplatforms/tabrcandroid" else="tabrcandroid">
+					<equals arg1="${dev.language}" arg2="lua"/>
+				</condition>
+				<!--Copy native headers/footers to lua before applying m4 -->
+				<available file="../../${outputdir}/${codedir}hybrid/tablet/native" type="dir" property="hybrid.nativelua.present"/>
+				<if>
+					<equals arg1="${hybrid.nativelua.present}" arg2="true"/>
+					<then>
+						<copy todir="${codedir}" failonerror="false">
+							<fileset dir="../../${outputdir}/${codedir}hybrid/tablet/native">
+							</fileset>
+						</copy>
+					</then>
+				</if>
+				<available file="../../${outputdir}/${codedir}hybrid/tablet/native/tabrcandroid" type="dir" property="native.tabandroidlua.present"/>
+				<if>
+					<equals arg1="${native.tabandroidlua.present}" arg2="true" />
+					<then>
+						<copy todir="${codedir}" overwrite="true">
+							<fileset dir="../../${outputdir}/${codedir}hybrid/tablet/native/tabrcandroid" excludes="startup.lua,tcchannel.lua,rcchannel.lua" casesensitive="false"/>
+						</copy>
+					</then>
+				</if>
+				<createAndCopyToLuasrc dir.name="${luasrcHybridAndroidTablet}" m4constant.name="m4tabrcandroid" output.lua.dir="${codedir}hybrid" startup.luadir="/tablet"/>
+				<if>
+					<equals arg1="${dev.language}" arg2="lua"/>
+					<then>
+						<exec executable="cmd.exe" failonerror="true" failifexecutionfails="true">
+							<env key="PATH" path="${env.PATH};${appfolder}/build/luacompiler"/>
+							<arg line='/c "luac${luaprefix} -o ${luac.file}${_debugluafile} ${project.loc}\luasrc\${luasrcHybridAndroidTablet}\startup\rcchannel.lua ${project.loc}\luasrc\${luasrcHybridAndroidTablet}\nongenerated\*.lua ${project.loc}\luasrc\${luasrcHybridAndroidTablet}\generated\*.lua ${project.loc}\luasrc\${luasrcHybridAndroidTablet}\startup\startup.lua"'/>
+						</exec>
+					</then>
+				</if>
+
+
+				<!--Copy native headers/footers to lua before applying m4 -->
+				<available file="../../${outputdir}/${codedir}hybrid/tablet/static" type="dir" property="hybrid.staticlua.present"/>
+				<if>
+					<equals arg1="${hybrid.staticlua.present}" arg2="true"/>
+					<then>
+						<copy todir="${codedir}" failonerror="false">
+							<fileset dir="../../${outputdir}/${codedir}hybrid/tablet/static">
+							</fileset>
+						</copy>
+					</then>
+				</if>
+				<available file="../../${outputdir}/${codedir}hybrid/tablet/static/tabrcandroid" type="dir" property="static.tabandroidlua.present"/>
+				<if>
+					<equals arg1="${static.tabandroidlua.present}" arg2="true" />
+					<then>
+						<copy todir="${codedir}" overwrite="true">
+							<fileset dir="../../${outputdir}/${codedir}hybrid/tablet/static/tabrcandroid" excludes="startup.lua,tcchannel.lua,rcchannel.lua" casesensitive="false"/>
+						</copy>
+					</then>
+				</if>
+				<createAndCopyToLuasrc dir.name="hybrid/spa/androidtab" m4constant.name="m4spatabandroid" output.lua.dir="${codedir}hybrid"/>
+			</then>
+			<else>
+				<if>
+					<equals arg1="${tabrcandroid.hybridmode}" arg2="wrapper"/>
+					<then>
+						<delete dir="tabandroidwrappertemp"/>
+						<mkdir dir="tabandroidwrappertemp"/>
+						<delete dir="tabandroidwrapper"/>
+						<mkdir dir="tabandroidwrapper"/>
+						<if>
+							<equals arg1="${dev.language}" arg2="lua"/>
+							<then>
+								<copy todir="tabandroidwrappertemp">
+									<fileset dir="../../output/luawrapper/tablet" includes="globalsinit_native.lua"/>
+								</copy>
+								<exec executable="${basedir}/m4routine.bat" failonerror="true" failifexecutionfails="true">
+									<env key="PATH" path="${env.PATH};${basedir}/m4.exe;${basedir}/regex2.dll;"/>
+									<arg value="tabandroidwrappertemp"/>
+									<arg value="tabandroidwrapper"/>
+									<arg value="m4tabrcandroid"/>
+								</exec>
+								<delete dir="tabandroidwrappertemp"/>
+								<copy todir="tabandroidwrapper">
+									<fileset dir="${project.loc}\luasrc\wrapper\androidtab\generated" excludes="globalsinit.lua"/>
+								</copy>
+								<exec executable="cmd.exe" failonerror="true" failifexecutionfails="true">
+									<env key="PATH" path="${env.PATH};${appfolder}/build/luacompiler"/>
+									<arg line='/c "luac${luaprefix} -o ${luac.file}${_debugluafile} ${project.loc}\luasrc\wrapper\androidtab\startup\rcchannel.lua ${project.loc}\luasrc\wrapper\androidtab\nongenerated\*.lua tabandroidwrapper\*.lua ${project.loc}\luasrc\wrapper\androidtab\startup\startup.lua"'/>
+								</exec>
+							</then>
+							<else>
+								<copy todir="tabandroidwrappertemp">
+									<fileset dir="../../${outputdir}/jswrapper/tablet" includes="startup_native.js"/>
+								</copy>
+								<exec-script executable="${node.file}" >
+									<arg value="${js.file}"/>
+									<arg value="${basedir}/tabandroidwrappertemp"/>
+									<arg value="${basedir}/tabandroidwrapper"/>
+									<arg value="tabrcandroid"/>
+									<arg value="${plugin.loc}/preview/node_mac"/>
+								</exec-script>
+								<delete dir="tabandroidwrappertemp"/>
+								<delete dir="${project.loc}\jssrc\tabrcandroid"/>
+								<mkdir dir="${project.loc}\jssrc\tabrcandroid"/>
+								<copy todir="${project.loc}\jssrc\tabrcandroid">
+									<fileset dir="${project.loc}\jssrc\wrapper\androidtab"/>
+								</copy>
+								<delete file="${project.loc}\jssrc\tabrcandroid\startup\startup_native.js"/>
+								<delete file="${project.loc}\jssrc\tabrcandroid\generated\startup_native.js"/>
+								<copy file="tabandroidwrapper\startup_native.js" tofile="${project.loc}\jssrc\tabrcandroid\startup\startup.js" overwrite="true"/>
+							</else>
+						</if>
+					</then>
+					<else>
+						<createAndCopyToLuasrc dir.name="tabrcandroid" m4constant.name="m4tabrcandroid" startup.luadir="/tablet"/>
+						<if>
+							<equals arg1="${dev.language}" arg2="lua"/>
+							<then>
+								<exec executable="cmd.exe" failonerror="true" failifexecutionfails="true">
+									<env key="PATH" path="${env.PATH};${appfolder}/build/luacompiler"/>
+									<arg line='/c "luac${luaprefix} -o ${luac.file}${_debugluafile} ${project.loc}\luasrc\tabrcandroid\startup\rcchannel.lua ${project.loc}\luasrc\tabrcandroid\nongenerated\*.lua ${project.loc}\luasrc\tabrcandroid\generated\*.lua ${project.loc}\luasrc\tabrcandroid\startup\startup.lua"'/>
+								</exec>
+							</then>
+						</if>
+					</else>
+				</if>
+			</else>
+		</if>
+
+		<if>
+			<equals arg1="${dev.language}" arg2="lua"/>
+			<then>
+				<copy file="${luac.file}" tofile="${tabrcandroidluac.file}" overwrite="true" />
+				<delete file ="${luac.file}"/>
+			</then>
+		</if>
+	</target>
+</project>

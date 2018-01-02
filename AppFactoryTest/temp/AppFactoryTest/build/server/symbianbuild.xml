@@ -1,0 +1,105 @@
+<!--@Note: This is read only file and not being used at runtime,if we want to update anything do it in zip file \trunk\guieditor\lib\build.zip --> 
+<project name="Kony" basedir="." default="build">
+   
+	<target name="build">
+
+		<unset name="logo"/>
+	    <var name="logo" value="${logo_symbian}"/>
+	    <unset name="splash.image"/>
+		<var name="splash.image" value="${splash.image_symbian}"/>
+		
+		<if>
+			<not>
+			<equals arg1="${symbian.hybridmode}" arg2="wrapper"/>
+			</not>
+			<then>
+				<delete dir="lua" failonerror="false"/>
+				<mkdir dir="lua"/>
+				<copy todir="lua" overwrite="true">
+				    <fileset dir="../../output/lua" excludes="startup.lua,tcchannel.lua,rcchannel.lua" casesensitive="false"/>
+			 	 </copy>
+				<available file="../../output/lua/symbian" type="dir" property="symbianlua.present"/>
+				<if>
+					<equals arg1="${symbianlua.present}" arg2="true" />
+					<then>
+						<copy todir="lua" overwrite="true">
+						   	<fileset dir="../../output/lua/symbian" excludes="startup.lua,tcchannel.lua,rcchannel.lua" casesensitive="false"/>
+						</copy>
+					</then>
+				</if>
+			</then>
+		</if>
+		
+		<delete dir="symbian"/>
+		<mkdir dir="symbian"/>
+		<mkdir dir="symbian/temp"/>
+		<delete dir ="resources"/>
+		<mkdir dir="resources"/>
+		
+		<copy todir="resources" overwrite="true">
+   			<fileset dir="${resfolder}/common" includes="*.*,${reslocale.str}"/>
+			<fileset dir="${resfolder}/mobile/common" includes="*.*,${reslocale.str}"/>
+   			<fileset dir="${i18n.properties}" includes="**/*.prop" casesensitive="false"/>    			
+   		</copy>
+	
+        <available file="${fonts_workspace}/Symbian" type="dir" property="symb.workspacefonts.present" /> 
+        <if>
+            <equals arg1="${symb.workspacefonts.present}" arg2="true" /> 
+            <then>
+                <copy todir="resources" overwrite="true">
+                    <fileset dir="${fonts_workspace}/Symbian" includes="*.ttf"/>
+                </copy>
+            </then>
+        </if>
+	
+		<copy todir="resources" overwrite="true">
+			<fileset dir="${resfolder}/mobile/native/symbian"/>
+		</copy>
+		
+        <available file="${resfolder}/fonts/Symbian" type="dir" property="symb.fonts.present" /> 
+        <if>
+            <equals arg1="${symb.fonts.present}" arg2="true" /> 
+            <then>
+                <copy todir="${resfolder}" overwrite="true">
+                    <fileset dir="${resfolder}/fonts/Symbian" includes="*.ttf"/>
+                </copy>
+            </then>
+        </if>
+		
+		<if>
+			<equals arg1="${symbian.hybridmode}" arg2="wrapper"/>
+			<then>
+				<exec executable="cmd.exe" failonerror="true" failifexecutionfails="true">
+					<env key="PATH" path="${env.PATH};${appfolder}/build/luacompiler"/>
+					<arg line='/c "luac${luaprefix} -o ${luac.file}${_debugluafile} static_home.lua"'/>
+				</exec>
+			</then>
+			<else>
+				<createAndCopyToLuasrc dir.name="symbian" m4constant.name="m4symbian"/>
+
+				<exec executable="cmd.exe" failonerror="true" failifexecutionfails="true">
+					<env key="PATH" path="${env.PATH};${appfolder}/build/luacompiler"/>
+					<arg line='/c "luac${luaprefix} -o ${luac.file} ${project.loc}\luasrc\symbian\startup\rcchannel.lua ${project.loc}\luasrc\symbian\nongenerated\*.lua ${project.loc}\luasrc\symbian\generated\*.lua ${project.loc}\luasrc\symbian\startup\startup.lua"'/>
+				</exec>
+			</else>
+		</if>
+			
+		<concat fixlastline="yes" destfile="resources.properties">
+		platform.version=${platform.version}
+		app.name=${appname}
+		app.version=${appversion}
+		vendor.name=${vendorname}
+		entrypoint=konyapp.o
+		appid=${appid}
+		logo.id=${logo}
+		konyapp.o.id=konyapp.o
+		konyapp.o.type=1
+		resfolder=${basedir}/resources
+		locales=${locales}</concat>
+
+		<replaceregexp file="resources.properties" match="\\" replace="/" flags="g" />
+	
+		<copy file="${luac.file}" tofile="${symbianluac.file}" overwrite="true" /> 
+		<delete file ="${luac.file}"/>
+	</target>
+</project>

@@ -1,0 +1,144 @@
+
+	my $fnModuleFile = $ARGV[0];
+	my $jsFileDir = $ARGV[1];
+	use XML::Simple ':strict';
+
+	my $xs = XML::Simple->new( KeepRoot => 0, KeyAttr => 1, ForceArray => 1 );
+	my $modules = $xs->XMLin($fnModuleFile."/functionalModules.xml")->{functionalModule};
+	my @formIds = ();
+	my @scripFiles = ();
+	my %moduleFormsMap = ();
+	my %formModuleMap = ();
+
+	my @empty =();
+	$moduleFormsMap{"app"} = \@empty;
+	my @allFileList = ();
+
+	for my $i (0 .. $#$modules)
+	{
+		my $data = $modules->[$i]->{forms}[0];
+	    
+		if(defined $data){
+		 	my @values = split(',', $data);
+		 	$moduleFormsMap{$modules->[$i]->{name}} = \@values;
+		  	foreach my $val (@values) {
+		  		if(defined $val){
+		  			push(@formIds,$val);
+		    		$formModuleMap{$val} = $modules->[$i]->{name};
+		  		}	    	
+		  	}
+		}
+		$data = $modules->[$i]->{jsModules}[0];
+		if(defined $data){
+		 	my @values = split(',', $data);
+		 	push(@scripFiles,@values);
+		}
+	}
+	push(@allFileList,@formIds);
+	push(@allFileList,@scripFiles);
+#print "List of files \n",Dumper(@allFileList),"\n";
+#print "Form Module Map\n",Dumper(\%formModuleMap),"\n";
+
+	foreach my $key (@allFileList){
+		if(!$key){
+			next;
+		}
+		my $file = '';
+		if( $key cmp 'app'){
+			if($key =~/\.js$/){
+				$file = $jsFileDir.'/'.$key;
+			}else{
+				$file = $jsFileDir.'/'.$key.'.js';
+			}
+		}
+		else {
+			if($key =~/\.js$/){
+				$file = $jsFileDir.'/'.$key;
+			}else{
+				$file = $jsFileDir.'/'.$key.'.js';
+			}
+		}
+
+		print "Processing file : $file\n";
+		
+		unless(-e $file){
+			next;
+		}
+		
+# uncomment this to exclude adding loadfunctionalmodule calls to startup files	
+#	my $tempKey = $key;
+#	$tempKey=~ s/\.js$//;
+#	   if($tempKey=~/^konylibrary$|^appskins$|^application$|^startup$/){
+#    	print "Skipping  file : $file\n";
+#    next;
+#    }
+		open my $search_file, '<', $file   or die "Can't open file $file: $!";
+		#Do Something  ##################################################################
+		my @lines = <$search_file>;
+		close $search_file or die $!;
+		
+		local $/ = undef;
+		my $idx = 0;
+		do {
+			
+			if($lines[$idx] =~ /^[ ]*\/\*/){
+				while(!($lines[$idx] =~ /\*\//)){
+					$idx++;
+				}
+			}
+			
+    		if(($lines[$idx] =~ /function .+/ or $lines[$idx] =~ /function\(/)and !($lines[$idx] =~ /^[ ]*\/\/*/)) {
+    			while(!($lines[$idx] =~ /{/) and !($lines[$idx] =~ /^[ ]*\/\/*/)) {
+    				$idx++;
+    			}
+    			my $openBraces = 0;
+    			if($lines[$idx] =~ /}/){
+    			    $openBraces = 0;
+    			}
+    			else {
+    			    $openBraces = 1;
+    			    $idx++;
+    			}
+        		my %tempModuleList = ();
+        		my $functionInit = $idx;
+        		while($openBraces > 0 and $idx < @lines){
+        			if($lines[$idx] =~ /^[ ]*\/\*/){
+						while(!($lines[$idx] =~ /\*\//)){
+							$idx++;
+						}
+					}
+        			if($lines[$idx] =~ /{/ and !($lines[$idx] =~ /^[ ]*\/\/*/)) {
+        				#$openBraces+=($lines[$idx] =~ /{/g);
+        				my $braces = ($lines[$idx] =~ tr/{//);
+        				$openBraces+=$braces;
+        			}
+        			if($lines[$idx] =~ /}/ and !($lines[$idx] =~ /^[ ]*\/\/*/)) {
+        				#$openBraces-=($lines[$idx] =~ /}/g);
+        				my $braces = ($lines[$idx] =~ tr/}//);
+        				$openBraces-=$braces;
+        			}
+        			
+        			foreach my $keyForm (keys %formModuleMap){
+	        			if(!($lines[$idx] =~ /^[ ]*\/\/*/) and ($lines[$idx] =~ /$keyForm\./ or $lines[$idx] =~ /$keyForm\[/)) {
+    	    				#print "$idx   : $formModuleMap{$keyForm} : $functionInit \n";
+        					if($formModuleMap{$keyForm} cmp $key) {
+        						#print "****$functionInit  : $key : $formModuleMap{$keyForm}\n";
+	        					$tempModuleList{$formModuleMap{$keyForm}} = "true"; 
+	        				}
+        				}
+        			}
+        			$idx++;
+        			}
+        			
+        		foreach my $keyMod (keys %tempModuleList){
+                    splice @lines, $functionInit, 0, "\n kony.modules.loadFunctionalModule(\"$keyMod\");\n";
+        		}
+    		}
+    	$idx++;
+		} until($idx >= @lines);
+	#End ############################################################################
+	
+	open $search_file, '>', $file or die $!;
+	print $search_file join("",@lines);
+	close $search_file;
+}

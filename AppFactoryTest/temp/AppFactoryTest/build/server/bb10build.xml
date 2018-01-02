@@ -1,0 +1,48 @@
+<!--@Note: This is read only file and not being used at runtime,if we want to update anything do it in zip file \trunk\guieditor\lib\build.zip --> 
+<project name="Kony" basedir="." default="build">
+   
+	<target name="build">
+		
+		<delete dir="${codedir}" failonerror="false"/>
+		<mkdir dir="${codedir}"/>
+		<copy todir="${codedir}" overwrite="true">
+   		    <fileset dir="../../${outputdir}/${codedir}" excludes="startup.lua,tcchannel.lua,rcchannel.lua" casesensitive="false"/>
+   	 	</copy>
+		<available file="../../${outputdir}/${codedir}/bb10" type="dir" property="bblua.present"/>
+		<if>
+			<equals arg1="${bblua.present}" arg2="true" />
+			<then>
+				<copy todir="${codedir}" overwrite="true">
+		     		<fileset dir="../../${outputdir}/${codedir}/bb10" excludes="startup.lua,tcchannel.lua,rcchannel.lua" casesensitive="false"/>
+	    		</copy>
+			</then>
+		</if>
+		
+		<createAndCopyToLuasrc dir.name="bb10" m4constant.name="m4bb10"/>
+		<if>
+			<equals arg1="${dev.language}" arg2="lua"/>
+			<then>
+				<exec executable="cmd.exe" failonerror="true" failifexecutionfails="true">
+					<env key="PATH" path="${env.PATH};${appfolder}/build/luacompiler"/>
+					<arg line='/c "luac${luaprefix} -o ${luac.file}${_debugluafile} ${project.loc}\luasrc\bb10\startup\rcchannel.lua ${project.loc}\luasrc\bb10\nongenerated\*.lua ${project.loc}\luasrc\bb10\generated\*.lua ${project.loc}\luasrc\bb10\startup\startup.lua"'/>
+				</exec>
+		   			
+				<!-- Create a LUA byte code version with line number info -->
+				
+				<exec executable="cmd.exe" failonerror="true" failifexecutionfails="true">
+					<env key="PATH" path="${env.PATH};${appfolder}/build/luacompiler"/>
+					<arg line='/c "luac${luaprefix} -o ${luac.file}.debug${_debugluafile} ${project.loc}\luasrc\bb10\startup\rcchannel.lua ${project.loc}\luasrc\bb10\nongenerated\*.lua ${project.loc}\luasrc\bb10\generated\*.lua ${project.loc}\luasrc\bb10\startup\startup.lua"'/>
+				</exec>
+			</then>
+		</if>
+		
+
+		<if>
+			<equals arg1="${dev.language}" arg2="lua"/>
+			<then>
+				<delete file ="${luac.file}"/>
+			</then>
+		</if>
+	</target>
+
+</project>

@@ -1,0 +1,15 @@
+<?xml version="1.0"  encoding="UTF-8"?>
+<application>
+	<appid>appid</appid>
+	<sms>  
+		<warfilename>smswar</warfilename> 
+		<servicedefxml>servicedef</servicedefxml> 
+	</sms> 
+	<wap> 
+		<warfilename>wapwar</warfilename>  
+		<servicedefxml>servicedef</servicedefxml> 
+	</wap>
+	<richclient> 
+		<warfilename>richclientwar</warfilename>  
+	</richclient>	
+</application>

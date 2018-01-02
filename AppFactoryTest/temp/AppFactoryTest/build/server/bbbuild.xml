@@ -1,0 +1,309 @@
+<!--@Note: This is read only file and not being used at runtime,if we want to update anything do it in zip file \trunk\guieditor\lib\build.zip --> 
+<project name="Kony" basedir="." default="build">
+   
+	<target name="build">
+		<unset name="logo"/>
+		<var name="logo" value="${logo_bb}"/>
+		<unset name="splash.image"/>
+		<var name="splash.image" value="${splash.image_bb}"/>
+		
+		<delete dir="${codedir}" failonerror="false"/>
+		<mkdir dir="${codedir}"/>
+		<if>
+			<equals arg1="${bb.hybridmode}" arg2="mixed"/>
+			<then>
+				<copy todir="lua" overwrite="true">
+		   		    <fileset dir="../../output/luahybrid" excludes="startup.lua,tcchannel.lua,rcchannel.lua" casesensitive="false"/>
+		   	 	</copy>
+				<available file="../../output/luahybrid/blackberry" type="dir" property="bblua.present"/>
+				<if>
+					<equals arg1="${bblua.present}" arg2="true" />
+					<then>
+						<copy todir="lua" overwrite="true">
+				     		<fileset dir="../../output/luahybrid/blackberry" excludes="startup.lua,tcchannel.lua,rcchannel.lua" casesensitive="false"/>
+			    		</copy>
+					</then>
+				</if>
+			</then>
+			<else>
+				<if>
+					<equals arg1="${bb.hybridmode}" arg2="native"/>
+					<then>
+						<copy todir="${codedir}" overwrite="true">
+				   		    <fileset dir="../../${outputdir}/${codedir}" excludes="startup.lua,tcchannel.lua,rcchannel.lua" casesensitive="false"/>
+				   	 	</copy>
+						<available file="../../${outputdir}/${codedir}/blackberry" type="dir" property="bblua.present"/>
+						<if>
+							<equals arg1="${bblua.present}" arg2="true" />
+							<then>
+								<copy todir="${codedir}" overwrite="true">
+						     		<fileset dir="../../${outputdir}/${codedir}/blackberry" excludes="startup.lua,tcchannel.lua,rcchannel.lua" casesensitive="false"/>
+					    		</copy>
+							</then>
+						</if>
+					</then>
+					<else>
+						<copy todir="lua" overwrite="true">
+				   		    <fileset dir="../../output/luawrapper" excludes="startup.lua,tcchannel.lua,rcchannel.lua" casesensitive="false"/>
+				   	 	</copy>
+						<available file="../../output/luawrapper/blackberry" type="dir" property="wrapperblackberrylua.present"/>
+						<if>
+							<equals arg1="${wrapperblackberrylua.present}" arg2="true" />
+							<then>
+								<copy todir="lua" overwrite="true">
+						     		<fileset dir="../../output/luawrapper/blackberry" excludes="startup.lua,tcchannel.lua,rcchannel.lua" casesensitive="false"/>
+					    		</copy>
+							</then>
+						</if>
+					</else>
+				</if>
+			</else>
+		</if>
+		
+   		<delete dir="bb"/>
+		<mkdir dir="bb"/>
+		<mkdir dir="bb/resources"/>
+		<mkdir dir="bb/temp"/>
+		<mkdir dir="scripts"/>
+   			
+		<delete dir ="resources"/>
+		<mkdir dir="resources"/>
+		
+   		<copy todir="resources" overwrite="true">
+   			<fileset dir="${resfolder}/common" includes="*.*,${reslocale.str}"/>
+   			<fileset dir="${resfolder}/mobile/common" includes="*.*,${reslocale.str}"/>
+   			<fileset dir="${i18n.properties}" includes="**/*.prop" casesensitive="false"/>   	
+   		</copy>
+   			
+   		
+        <available file="${fonts_workspace}/Blackberry" type="dir" property="bb.workspacefonts.present" /> 
+        <if>
+            <equals arg1="${bb.workspacefonts.present}" arg2="true" /> 
+            <then>
+                <copy todir="resources" overwrite="true">
+                    <fileset dir="${fonts_workspace}/Blackberry" includes="*.ttf"/>
+                </copy>
+            </then>
+        </if>
+		
+		<if>
+			<equals arg1="${bb.hybridmode}" arg2="wrapper"/>
+			<then>
+				<copy todir="resources" overwrite="true">
+					<fileset dir="${resfolder}/mobile/web/spablackberry"/>
+				</copy>
+			</then>
+			<else>
+				<copy todir="resources" overwrite="true">
+					<fileset dir="${resfolder}/mobile/native/blackberry"/>
+				</copy>
+			</else>
+		</if>
+
+        <available file="${resfolder}/fonts/Blackberry" type="dir" property="bb.fonts.present" /> 
+        <if>
+            <equals arg1="${bb.fonts.present}" arg2="true" /> 
+            <then>
+                <copy todir="resources" overwrite="true">
+                    <fileset dir="${resfolder}/fonts/Blackberry" includes="*.ttf"/>
+                </copy>
+            </then>
+        </if>
+ 	 
+   			
+   		<available file="${resfolder}/lib/bb" type="dir" property="lib.present"/>
+
+		<if>
+			<equals arg1="${lib.present}" arg2="true" />
+			<then>
+				<copy todir="resources">
+					<fileset dir="${resfolder}/lib" includes="**/*.*"/>
+				</copy>			
+			</then>
+		</if>
+   			
+		<copy todir="bb/resources" overwrite="true">
+			<fileset dir="${basedir}/resources" casesensitive="false"/>
+		</copy>
+   			
+		<if>
+			<equals arg1="${bb.hybridmode}" arg2="mixed"/>
+			<then>
+				<property name="luasrcHybridBB" value="hybrid/nativeplatforms/blackberry"/>
+				<!--Copy native headers/footers to lua before applying m4 -->
+				<available file="../../output/luahybrid/native" type="dir" property="hybrid.nativelua.present"/>
+				<if>
+					<equals arg1="${hybrid.nativelua.present}" arg2="true"/>
+					<then>
+						<copy todir="lua" failonerror="false">
+							<fileset dir="../../output/luahybrid/native"></fileset>
+						</copy>
+					</then>
+				</if>
+				<available file="../../output/luahybrid/native/blackberry" type="dir" property="native.blackberrylua.present"/>
+				<if>
+					<equals arg1="${native.blackberrylua.present}" arg2="true" />
+					<then>
+						<copy todir="lua" overwrite="true">
+				     		<fileset dir="../../output/luahybrid/native/blackberry" excludes="startup.lua,tcchannel.lua,rcchannel.lua" casesensitive="false"/>
+			    		</copy>
+					</then>
+				</if>
+				<createAndCopyToLuasrc dir.name="${luasrcHybridBB}" m4constant.name="m4bb" output.lua.dir="luahybrid"/>
+				
+				<exec executable="cmd.exe" failonerror="true" failifexecutionfails="true">
+					<env key="PATH" path="${env.PATH};${appfolder}/build/luacompiler"/>
+					<arg line='/c "luac${luaprefix} -o ${luac.file}${_debugluafile} ${project.loc}\luasrc\${luasrcHybridBB}\startup\rcchannel.lua ${project.loc}\luasrc\${luasrcHybridBB}\nongenerated\*.lua ${project.loc}\luasrc\${luasrcHybridBB}\generated\*.lua ${project.loc}\luasrc\${luasrcHybridBB}\startup\startup.lua"'/>
+				</exec>
+				
+				<!--Copy native headers/footers to lua before applying m4 -->
+				<available file="../../output/luahybrid/static" type="dir" property="hybrid.staticlua.present"/>
+				<if>
+					<equals arg1="${hybrid.staticlua.present}" arg2="true"/>
+					<then>
+						<copy todir="lua" failonerror="false">
+							<fileset dir="../../output/luahybrid/static"></fileset>
+						</copy>
+					</then>
+				</if>
+				<available file="../../output/luahybrid/static/blackberry" type="dir" property="static.blackberrylua.present"/>
+				<if>
+					<equals arg1="${static.blackberrylua.present}" arg2="true" />
+					<then>
+						<copy todir="lua" overwrite="true">
+				     		<fileset dir="../../output/luahybrid/static/blackberry" excludes="startup.lua,tcchannel.lua,rcchannel.lua" casesensitive="false"/>
+			    		</copy>
+					</then>
+				</if>
+				<createAndCopyToLuasrc dir.name="hybrid/spa/bb" m4constant.name="m4spabb" output.lua.dir="luahybrid"/>
+			</then>
+			<else>
+				<if>
+					<equals arg1="${bb.hybridmode}" arg2="wrapper"/>
+					<then>
+						<delete dir="bbwrappertemp"/>
+						<mkdir dir="bbwrappertemp"/>
+						<delete dir="bbwrapper"/>
+						<mkdir dir="bbwrapper"/>
+						<copy todir="bbwrappertemp">
+							<fileset dir="../../output/luawrapper" includes="globalsinit_native.lua"/>
+						</copy>
+						<exec executable="${basedir}/m4routine.bat" failonerror="true" failifexecutionfails="true">
+							<env key="PATH" path="${env.PATH};${basedir}/m4.exe;${basedir}/regex2.dll;"/>
+							<arg value="bbwrappertemp"/>
+							<arg value="bbwrapper"/>
+							<arg value="m4bb"/>
+						</exec>
+						<delete dir="bbwrappertemp"/>
+						<copy todir="bbwrapper">
+							<fileset dir="${project.loc}\luasrc\wrapper\bb\generated" excludes="globalsinit.lua"/>
+						</copy>
+						<exec executable="cmd.exe" failonerror="true" failifexecutionfails="true">
+							<env key="PATH" path="${env.PATH};${appfolder}/build/luacompiler"/>
+							<arg line='/c "luac${luaprefix} -o ${luac.file}${_debugluafile} ${project.loc}\luasrc\wrapper\bb\startup\rcchannel.lua ${project.loc}\luasrc\wrapper\bb\nongenerated\*.lua bbwrapper\*.lua ${project.loc}\luasrc\wrapper\bb\startup\startup.lua"'/>
+						</exec>
+					</then>
+					<else>
+						<createAndCopyToLuasrc dir.name="bb" m4constant.name="m4bb"/>
+						<if>
+							<equals arg1="${dev.language}" arg2="lua"/>
+							<then>
+								<exec executable="cmd.exe" failonerror="true" failifexecutionfails="true">
+									<env key="PATH" path="${env.PATH};${appfolder}/build/luacompiler"/>
+									<arg line='/c "luac${luaprefix} -o ${luac.file}${_debugluafile} ${project.loc}\luasrc\bb\startup\rcchannel.lua ${project.loc}\luasrc\bb\nongenerated\*.lua ${project.loc}\luasrc\bb\generated\*.lua ${project.loc}\luasrc\bb\startup\startup.lua"'/>
+								</exec>
+						   			
+								<!-- Create a LUA byte code version with line number info -->
+								
+								<exec executable="cmd.exe" failonerror="true" failifexecutionfails="true">
+									<env key="PATH" path="${env.PATH};${appfolder}/build/luacompiler"/>
+									<arg line='/c "luac${luaprefix} -o ${luac.file}.debug${_debugluafile} ${project.loc}\luasrc\bb\startup\rcchannel.lua ${project.loc}\luasrc\bb\nongenerated\*.lua ${project.loc}\luasrc\bb\generated\*.lua ${project.loc}\luasrc\bb\startup\startup.lua"'/>
+								</exec>
+							</then>
+						</if>
+					</else>
+				</if>
+			</else>
+		</if>
+		
+		<copy todir="bb/resources" overwrite="true">
+			<fileset dir="${basedir}/resources" includes="**/small/*.png, **/small/${reslocale.str}" casesensitive="false"/>
+		</copy>
+   			
+		<copy todir="bb/resources" overwrite="true">
+			<fileset dir="${basedir}/resources" includes="*.ttf" casesensitive="false"/>
+			<fileset dir="${basedir}/resources" includes="**/large/*.png, **/large/${reslocale.str}" casesensitive="false"/>
+		</copy>
+		
+		<if>
+			<equals arg1="${dev.language}" arg2="lua"/>
+			<then>
+				<copy todir="bb/resources" overwrite="true">
+					<fileset dir="${basedir}/resources" includes="konyapp.o" casesensitive="false"/>
+					<fileset dir="${basedir}/resources" includes="konyapp.o.debug" casesensitive="false"/>
+				</copy>
+			</then>
+		</if>
+
+		<copy todir="bb/resources" overwrite="true">
+   			<fileset dir="${i18n.properties}" includes="**/*.prop" casesensitive="false"/>			
+			<fileset dir="${basedir}/resources" includes="**/storm/*.png,**/storm/${reslocale.str}" casesensitive="false"/>
+		</copy>
+
+		<if>
+			<equals arg1="${lib.present}" arg2="true" />
+			<then>
+				<mkdir dir="bb/lib"/>
+				<copy todir="bb/lib">
+					<fileset dir="${basedir}/resources/bb" includes="**/*.*" casesensitive="false"/>
+				</copy>
+			</then>
+		</if>
+   		<!-- Copying 3rd party libs for BB -->
+		<available file="${bb.libs.folder}" type="dir" property="bb.customlibs.available"/>
+		<available file="${bb.templates.folder}" type="dir" property="bb.templates.available"/>
+   			<available file="${bb.libs.folder}/i18n" type="dir" property="bb.libs.i18n.available"/>
+		<if>
+			<and>
+				<equals arg1="${bb.customlibs.available}" arg2="true"/>
+				<equals arg1="${bb.templates.available}" arg2="true"/>
+			</and>
+			<then>
+				<mkdir dir="bb/ffi/lib"/>
+				<mkdir dir="bb/ffi/lib/common"/>
+				<mkdir dir="bb/src"/>
+				<mkdir dir="bb/i18n"/>
+				<echo message="Copying third party libs and generated templates"/>
+				<copy todir="bb/ffi/lib/common"> 
+					<fileset dir="${bb.libs.folder}" includes="*.jar"></fileset>
+				</copy>
+				<if>
+					<equals arg1="${bb.libs.i18n.available}" arg2="true"/>
+					<then>
+						<echo message="Copying i18n"/>
+						<copy todir="bb/i18n" failonerror="false">
+							<fileset dir="${bb.libs.folder}/i18n" includes="**/*.*"></fileset>
+						</copy>
+					</then>
+				</if>
+				<copy todir="bb/ffi/lib">
+					<fileset dir="${bb.libs.folder}" includes="*/*.jar"></fileset>
+				</copy>
+				<copy todir="bb/src"> 
+					<fileset dir="${customlibs.src.dir}/blackberry" includes="**/*.*"></fileset>
+				</copy>
+			</then>
+			<else>
+				<echo message="No custom libraries"/>
+			</else>
+		</if>
+   		<!-- Done : Copying 3rd party libs for BB -->
+		<if>
+			<equals arg1="${dev.language}" arg2="lua"/>
+			<then>
+				<delete file ="${luac.file}"/>
+			</then>
+		</if>
+	</target>
+
+</project>

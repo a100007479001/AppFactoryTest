@@ -1,0 +1,134 @@
+<!--@Note: This is read only file and not being used at runtime,if we want to update anything do it in zip file \trunk\guieditor\lib\build.zip --> 
+<project name="Kony" basedir="." default="build">
+   
+	<target name="build">
+
+	  		<unset name="logo"/>
+	  		<var name="logo" value="${logo_winmobile}"/>
+	  		<unset name="splash.image"/>
+	  		<var name="splash.image" value="${splash.image_winmobile}"/>
+	  		
+			<if>
+				<not>
+				<equals arg1="${winmobile6x.hybridmode}" arg2="wrapper"/>
+				</not>
+				<then>
+		   	  		<copy todir="${codedir}" overwrite="true">
+		   	  		    <fileset dir="../../${outputdir}/${codedir}" excludes="startup.lua,tcchannel.lua,rcchannel.lua" casesensitive="false"/>
+		   	  	 	</copy>
+		   			<available file="../../${outputdir}/${codedir}/winmobile6x" type="dir" property="win6xlua.present"/>
+		   			<if>
+		   				<equals arg1="${win6xlua.present}" arg2="true" />
+		   				<then>
+		   	  				<copy todir="${codedir}" overwrite="true">
+		   	  		   			     <fileset dir="../../${outputdir}/${codedir}/winmobile6x" excludes="startup.lua,tcchannel.lua,rcchannel.lua" casesensitive="false"/>
+		   	  				</copy>
+		   				</then>
+		   			</if>
+				</then>
+			</if>
+
+			<delete dir="winmobile6x"/>
+			<mkdir dir="winmobile6x"/>
+			<mkdir dir="winmobile6x/temp"/>
+	  		<mkdir dir="winmobile6x/resources"/>
+
+			<delete dir ="resources"/>
+			<mkdir dir="resources"/>
+			
+			<copy todir="resources" overwrite="true">
+	   			<fileset dir="${resfolder}/common"/>
+	   				<fileset dir="${resfolder}/mobile/common"/>
+	   			<fileset dir="${i18n.xml}" includes="**/*.*" casesensitive="false"/>   			
+	   			
+	   		</copy>
+	  		
+	        <available file="${fonts_workspace}/WinMobile" type="dir" property="win6x.workspacefonts.present" /> 
+	        <if>
+	            <equals arg1="${win6x.workspacefonts.present}" arg2="true" /> 
+	            <then>
+	                <copy todir="resources" overwrite="true">
+	                    <fileset dir="${fonts_workspace}/WinMobile" includes="*.ttf"/>
+	                </copy>
+	            </then>
+	        </if>
+	    		
+			<copy todir="resources" overwrite="true">
+				<fileset dir="${resfolder}/mobile/native/winmobile6x"/>
+			</copy>
+	  		
+	        <available file="${resfolder}/fonts/WinMobile" type="dir" property="win6x.fonts.present" /> 
+	        <if>
+	            <equals arg1="${win6x.fonts.present}" arg2="true" /> 
+	            <then>
+	                <copy todir="resources" overwrite="true">
+	                    <fileset dir="${resfolder}/fonts/WinMobile6x" includes="*.ttf"/>
+	                </copy>
+	            </then>
+	        </if>
+	  		
+			<if>
+				<equals arg1="${winmobile6x.hybridmode}" arg2="wrapper"/>
+				<then>
+					<exec executable="cmd.exe" failonerror="true" failifexecutionfails="true">
+						<env key="PATH" path="${env.PATH};${appfolder}/build/luacompiler"/>
+						<arg line='/c "luac${luaprefix} -o ${luac.file}${_debugluafile} static_home.lua"'/>
+					</exec>
+				</then>
+				<else>
+					<createAndCopyToLuasrc dir.name="winmobile6x" m4constant.name="m4winmobile6x"/>
+					<if>
+						<equals arg1="${dev.language}" arg2="lua"/>
+						<then>	
+	   		   			<exec executable="cmd.exe" failonerror="true" failifexecutionfails="true">
+	   		   				<env key="PATH" path="${env.PATH};${appfolder}/build/luacompiler"/>
+	   		   				<arg line='/c "luac${luaprefix} -o ${luac.file} ${project.loc}\luasrc\winmobile6x\startup\rcchannel.lua ${project.loc}\luasrc\winmobile6x\nongenerated\*.lua ${project.loc}\luasrc\winmobile6x\generated\*.lua ${project.loc}\luasrc\winmobile6x\startup\startup.lua"'/>
+	   		   			</exec>
+						</then>
+					</if>
+					
+				</else>
+			</if>
+			
+			<!-- Window Professional for Emulator only -->
+			<copy todir="${winm.dir}/prof/2577">
+				<fileset dir="resources">
+					<include name="**/*.png"/>
+					<include name="**/*.ttf"/>
+				</fileset>
+			</copy>
+
+			<!-- Window Professional 65 for Emulator only -->
+			<copy todir="${winm.dir}/prof65/2577">
+				<fileset dir="resources">
+					<include name="**/*.png"/>
+					<include name="**/*.ttf"/>
+				</fileset>
+			</copy>
+	  		
+	   		<copy todir="winmobile6x/resources" overwrite="true">
+	   			<fileset dir="${basedir}/resources"/>
+	   		</copy>
+	  		
+			<if>
+				<equals arg1="${dev.language}" arg2="lua"/>
+				<then>
+		   			<copy todir="${winm.dir}/prof/2577">
+		   				<fileset dir="resources">
+		   					<include name="**/konyapp.o"/>
+		   				</fileset>
+		   			</copy>
+		   			<copy todir="${winm.dir}/prof65/2577">
+		   				<fileset dir="resources">
+		   					<include name="**/konyapp.o"/>
+		   				</fileset>
+		   			</copy>
+		   	   		<copy todir="winmobile6x/resources" overwrite="true">
+		   	   			<fileset dir="${basedir}/resources" includes="konyapp.o" casesensitive="false"/>
+		   	   		</copy>
+	   			<copy file="${luac.file}" tofile="${win6xluac.file}" overwrite="true" /> 
+	   			<delete file ="${luac.file}"/>
+				</then>
+			</if>
+	</target>
+</project>

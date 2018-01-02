@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema">
+    <xs:element name="functionalModules">
+        <xs:complexType>
+            <xs:sequence>
+                <xs:element maxOccurs="unbounded" ref="functionalModule" />
+            </xs:sequence>
+            <xs:attribute name="projectName" use="required"
+                type="xs:NCName" />
+        </xs:complexType>
+    </xs:element>
+    <xs:element name="functionalModule">
+        <xs:complexType>
+            <xs:all>
+                <xs:element minOccurs="0" maxOccurs="1" ref="dependentModules" />
+                <xs:element minOccurs="0" maxOccurs="1" ref="views" />
+                <xs:element minOccurs="0" maxOccurs="1" ref="jsModules" />
+            </xs:all>
+            <xs:attribute name="loadOnStartUp" type="xs:boolean" />
+            <xs:attribute name="name" use="required" type="xs:NCName" />
+            <xs:attribute name="init" type="xs:NCName" />
+        </xs:complexType>
+    </xs:element>
+    <xs:element name="dependentModules" type="xs:string" />    
+    <xs:element name="views" type="xs:string" />
+    <xs:element name="jsModules" type="xs:string" />    
+    <!-- 
+     <xs:simpleType name="pathVal">
+        <xs:restriction base="xs:string">
+            <xs:pattern value="[^\s\r\n]+" />
+        </xs:restriction>
+     </xs:simpleType>
+     
+     <xs:simpleType name="NonEmptyString">
+        <xs:restriction base="xs:string">
+            <xs:minLength value="1" />
+            <xs:pattern value="\S+"/>
+        </xs:restriction>
+    </xs:simpleType>
+     -->
+</xs:schema>

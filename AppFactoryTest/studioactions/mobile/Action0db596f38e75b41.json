@@ -1,0 +1,15 @@
+{
+    "AS_NamedActions_a281128f391c41cfb303cbe9a767ab0f": {
+        "id": "AS_NamedActions_a281128f391c41cfb303cbe9a767ab0f",
+        "type": "ACTION_SEQUENCE",
+        "name": "Action0db596f38e75b41",
+        "language": "js",
+        "actions": [{
+            "id": "ADD_SNIPPET__f762aa1b9d044d6590eaebcd27b06644",
+            "type": "ADD_SNIPPET",
+            "codeSnippet": "kony.print(\"this is test message\");",
+            "parentId": null,
+            "callbackType": null
+        }]
+    }
+}

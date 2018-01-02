@@ -1,0 +1,842 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project name="fpreview" basedir="."  default="all">
+	<target name="init">
+		<taskdef resource="com/kony/ant/antkonyscript.properties">
+		  <classpath>
+				<pathelement location="${plugin.loc}/lib/KonyAntScript.jar"/>
+		  </classpath>
+		</taskdef>
+		<taskdef resource="net/sf/antcontrib/antcontrib.properties">
+	      <classpath>
+	        <pathelement location="${plugin.loc}/lib/ant-contrib-0.6.jar"/>
+	      </classpath>
+	    </taskdef>
+		<property name="outputfolder" value="${appfolder}/output/lua"/>
+		<property environment="env"/>
+		<property name="dist.dir" value="${basedir}/dist"/>
+		<property name="jssrc.dir" value="${resfolder}/../jssrc/android"/>
+		<property name="secureappsource" value="false"/>
+		
+		<condition property="codedir" value="js" else="lua">
+			<equals arg1="js" arg2="${dev.language}" casesensitive="false" trim="true"/>
+		</condition>
+		<condition property="outputdir" value="jsoutput" else="output">
+			<equals arg1="js" arg2="${dev.language}" casesensitive="false" trim="true"/>
+		</condition>
+	
+		
+		<if>
+			<equals arg1="${hybridmode}" arg2="native"/>
+			<then>
+				<property name="app.dir" value="${dist.dir}/fpres"/>
+			</then>
+		<else>
+			<if>
+				<equals arg1="${hybridmode}" arg2="wrapper"/>
+				<then>
+					<property name="app.dir" value="${dist.dir}/${appid}_wrapper"/>
+					<property name="hybridmode.dir" value="${appfolder}/${outputdir}/spaandroidwrapper"/>
+				</then>
+			<else>
+				<if>
+					<equals arg1="${hybridmode}" arg2="mixed"/>
+					<then>
+						<property name="app.dir" value="${dist.dir}/${appid}_mixed"/>
+						<property name="hybridmode.dir" value="${appfolder}/${outputdir}/spaandroidmixed"/>
+					</then>
+				</if>
+			</else>
+			</if>
+		</else>
+		</if>
+		
+		<property name="assets.dir" value="${app.dir}/assets"/>
+		<property name="libs.dir" value="${app.dir}/libs"/>
+		<property name="src.dir" value="${app.dir}/src"/>
+		<property name="ffi.package" value="com/konylabs/ffi"/>
+		<property name="cwsrc.package" value="com/konylabs/customwidget"/>	
+		
+		<if>
+			<or>
+				<equals arg1="${resources.new.structure}" arg2="false"/>
+				<equals arg1="${resources.new.structure}" arg2="$${resources.new.structure}"/>
+			</or>
+			<then>
+				<property name="resources.common.folder" value="common"/>
+				<property name="resources.platform.folder" value="${resource.platform.folder}"/>
+				<property name="resources.mobile.web" value="mobilethinclient"/>
+			</then>
+		</if>
+	</target>
+	    
+    <target name="copyjar">
+        <mkdir dir="${dist.dir}"/>
+        <mkdir dir="${app.dir}"/>
+        <unjar src="codegen.jar" dest="${app.dir}"/>
+    </target>
+	
+	<target name="gen">
+        <echo>Building android source code</echo>
+		<if>
+			<available file="${plugin.loc}/lib/KonyAntScript.jar"/>
+			<then>
+				<osfamily property="os.family"/>          
+				<if>
+					<equals arg1="${os.family}" arg2="windows"/>
+					<then>
+						<propertyregex property="andhome" input="${android.home}" regexp="\\" replace="//"/>
+					</then>
+					<else>
+						<property name="andhome" value="${android.home}"/>
+					</else>
+				</if>
+			</then>
+			<else>
+				 <propertyregex property="andhome" input="${android.home}" regexp="\\" replace="//"/>
+			</else>
+		</if>
+		
+		<if>
+    	<equals arg1="${packagename}" arg2="$${packagename}"/>
+    		<then>
+    			<echo message="The value of packagename is empty" />
+    			<property name="package" value="com.konylabs.${appid}"/>
+    		</then>
+    	<else>
+    		<if>
+    			<equals arg1="${packagename}" arg2="" />
+    			<then>
+    				<echo message="The value of packagename is empty" />
+    				<property name="package" value="com.konylabs.${appid}"/>
+    			</then>
+    		<else>
+    			<echo message="The value of packagename is ${packagename}" />
+    			<property name="package" value="${packagename}"/>
+    		</else>
+    		</if>
+    	</else>
+    	</if>
+		
+		<propertyregex property="packagepath" input="${package}" regexp="\." replace="//"/> 
+    	<!-- Creating source folder -->
+    	<echo message="Creating package path: ${app.dir}/src/${packagepath}"/> 
+    	
+    	<mkdir dir="${app.dir}/src/${packagepath}"/>
+		<move file="${app.dir}/src/APPID.java" tofile="${app.dir}/src/${packagepath}/${appid}.java"/>
+    	<if>
+    		   <equals arg1="${packagename}" arg2="$${packagename}"/>
+    		<then>
+    			<echo message="The value of packagename is empty" />
+    			<property name="package" value="com.konylabs.${appid}"/>
+    		</then>
+    	<else>
+    		<if>
+    			<equals arg1="${packagename}" arg2="" />
+    			<then>
+    				<echo message="The value of packagename is empty" />
+    				<property name="package" value="com.konylabs.${appid}"/>
+    			</then>
+    		<else>
+    			<echo message="The value of packagename is ${packagename}" />
+    			<property name="package" value="${packagename}"/>
+    		</else>
+    		</if>
+    	</else>
+    	</if>
+        
+    </target>
+    
+	<target name="copyassets">
+        <echo>Copying the resources to android assets</echo>
+		<if>
+			<equals arg1="${build.option}" arg2="debug"/>
+			<then>
+				<property name="appURLProp" value="http://${machineip}:${jetty.portnum}/${appid}r/s"/>
+			</then>
+			<else>
+				<!-- Handles both release and protected cases-->
+				<property name="appURLProp" value=""/>
+			</else>
+		</if>
+
+		<if>
+			<equals arg1="${splash.image}" arg2="$${splash.image}"/>
+			<then>
+				<property name="splashScreenImg" value=""/>
+			</then>
+			<else>
+				<property name="splashScreenImg" value="${splash.image}"/>
+				<!-- copy file="${resfolder}/build/${splash.image}" tofile="${app.dir}/res/drawable/${splash.image}" overwrite="true"/-->
+			</else>
+		</if>
+        <copy file="application.properties" tofile="${assets.dir}/application.properties" overwrite="true"/>
+		<concat fixlastline="yes" destfile="${assets.dir}/application.properties">
+			Splash-FG: ${splash.fgcolor}
+			Splash-BG: ${splash.bgcolor}
+			Splash-LI: ${splash.li}
+			Splash-IMG: ${splashScreenImg}
+			Splash-ANIM-DURATION: ${splash.animation.duration}
+			Splash-ANIM-IMGLIST: ${splash.animation.images}			
+            Splash-VIDEO: ${splash.video}
+            Splash-VIDEO-INTERRUPTIBLE: ${splash.video.interruptable}
+			Splash-ORIENTATION : ${splash.orientation}
+			BUILD: ${build.option}
+			AppMode : ${hybridmode}
+			DevLang : ${dev.language}
+			EnableActionBar : ${actionbar}
+			AllowSelfSignedCerts : ${allowselfsignedcertificates}
+			UseGooglePlayLocationServices : ${usegoogleplaylocationservices.local}
+		</concat>
+		<!--concat fixlastline="yes" destfile="${assets.dir}/application.properties" append="true">App-URL=http://${machineip}:${jetty.portnum}/${appid}r/s</concat>
+		<concat fixlastline="yes" destfile="${assets.dir}/application.properties" append="true">Splash-FG: ${splash.fgcolor}</concat>
+		<concat fixlastline="yes" destfile="${assets.dir}/application.properties" append="true">Splash-BG: ${splash.bgcolor}</concat>
+		<concat fixlastline="yes" destfile="${assets.dir}/application.properties" append="true">BUILD: ${build.option}</concat-->
+
+        <replace file="${assets.dir}/application.properties" token="^(App-URL.+$)" value="App-URL=http://${machineip}:${jetty.portnum}/${appid}r/s" />
+	
+        <available file="${i18n.android.properties}" type="dir" property="locales.present" /> 
+        <if>
+            <equals arg1="${locales.present}" arg2="true" /> 
+            <then>
+                <copy todir="${assets.dir}" overwrite="true">
+                    <fileset dir="${i18n.android.properties}" includes="*.prop"/>
+                </copy>
+				<if>
+					<or>
+					<equals arg1="${hybridmode}" arg2="wrapper"/>
+					<equals arg1="${hybridmode}" arg2="mixed"/>
+					</or>
+					<then>
+						<mkdir dir="${assets.dir}/web"/>
+						<mkdir dir="${assets.dir}/web/resources"/>
+						<mkdir dir="${assets.dir}/web/resources/strings"/>
+						<copy todir="${assets.dir}/web/resources/strings" overwrite="true">
+							<fileset dir="${resfolder}/i18n/iphone_properties" includes="*.prop"/>
+							<mapper type="glob" from="*.prop" to="*.js"/>
+						</copy>
+						<replaceregexp match="(.*)" replace="var i18nObject = {\1}" flags="s" byline="false">
+							<fileset dir="${assets.dir}/web/resources/strings" includes="*.js"/>
+						</replaceregexp>
+						<replace dir="${assets.dir}/web/resources/strings">
+							<include name="*.js"/>
+							<replacefilter token="&quot;=&quot;" value="&quot;:&quot;"/>
+							<replacefilter token="&quot;;" value="&quot;,"/>
+						</replace>
+					</then>
+				</if>
+            </then>
+        </if>
+
+		<if>
+			<equals arg1="${dev.language}" arg2="js"/>
+			<then>
+				<if>
+					<equals arg1="${secureappsource}" arg2="$${secureappsource}"/>
+					<then>
+						<property name="secureappsource.local" value="true"/>
+					</then>
+					<else>
+						<property name="secureappsource.local" value="${secureappsource}"/>
+					</else>
+				</if>
+					<delete dir="${app.dir}/src/com/konylabs/js/appsrc" quiet="true"/>
+					<delete dir="${assets.dir}/js" quiet="true"/>
+					<mkdir dir="${assets.dir}/js"/>
+					<available file="${jssrc.dir}" type="dir" property="jssrc.present"/>
+					<if>
+						<equals arg1="${jssrc.present}" arg2="true"/>
+						<then>
+							<zip destfile="${assets.dir}/js/startup.js">
+								<zipfileset dir="${jssrc.dir}/nongenerated" includes="**/*.js"></zipfileset>
+								<zipfileset dir="${jssrc.dir}/generated"></zipfileset>
+								<zipfileset dir="${jssrc.dir}/startup"></zipfileset>
+							</zip>
+							<available file="${appfolder}/${outputdir}/functionalmodules" type="dir" property="fm.dir.present"/>
+							<echo> FM avail = ${fm.dir.present}</echo>
+							<if>
+								<equals arg1="${fm.dir.present}" arg2="true"/>
+								<then>
+									<zip destfile="${assets.dir}/js/startup.js" update="true">
+										<zipfileset dir="${appfolder}/${outputdir}/functionalmodules"> </zipfileset>
+									</zip>
+								</then>
+							</if>
+						</then>
+					</if>
+			</then>
+			<else>
+				<replace file="${app.dir}/src/${packagepath}/${appid}.java" token="$APP_SOURCE_LOC" value="1" />
+				<if>
+					<equals arg1="${nativecodegen}" arg2="$${nativecodegen}"/>
+					<then>
+						<condition property="isBiggerCode">
+							<length file="../server/kbf/androidkonyapp.o" when="gt" length="1036288" />
+						</condition>
+						<if>
+							<equals arg1="${isBiggerCode}" arg2="true" />
+							<then>
+								<copy file="../server/kbf/androidkonyapp.o" tofile="${assets.dir}/${bytecode.file}.mp3" overwrite="true"/>
+							</then>
+							<else>
+								<copy file="../server/kbf/androidkonyapp.o" tofile="${assets.dir}/${bytecode.file}" overwrite="true"/>
+							</else>
+						</if>
+					</then>	
+				</if>
+			</else>
+		</if>
+		
+		<if>
+			<equals arg1="${locales}" arg2="" />
+			<then>
+				<property name="langlocales.present" value="false"/>	
+			</then>
+			<else>
+				<property name="langlocales.present" value="true"/>	
+			</else>
+		</if>
+		<if>
+			<and>
+				<equals arg1="${common.present}" arg2="true"/>
+				<equals arg1="${langlocales.present}" arg2="true"/>
+			</and>
+			<then>
+				<for list="${locales}" param="letter">
+					<sequential>
+						<propertyregex property="folderval" override="true"
+							  input="@{letter}"
+							  regexp="([^\.]*)\_([^\.]*)"
+							  replace="drawable-\1-r\2"
+							  casesensitive="false" />
+						<if>
+							<equals arg1="${folderval}" arg2="$${folderval}"/>
+							<then>
+								<property name="folderval" value="drawable-@{letter}"/>
+							</then>
+						</if>
+						<copy todir="${app.dir}/res/${folderval}" overwrite="true">
+							<fileset dir="${resfolder}/${resources.common.folder}/@{letter}" includes="**/**"/>
+						</copy>
+					</sequential>
+				</for>
+    		</then>
+		</if>
+		
+		<available file="${resfolder}/fonts" type="dir" property="fonts.present"/>
+		<mkdir dir="${assets.dir}/fonts"/>
+    	<if>
+    		<equals arg1="${fonts.present}" arg2="true"/>
+    		<then>
+    	        <copy todir="${assets.dir}/fonts" overwrite="true">
+    	            <fileset dir="${resfolder}/fonts" includes="*.*"/>
+    	        </copy>
+    		</then>
+    	</if>
+	
+		<if>
+			<equals arg1="${platform.folder}" arg2="$${platform.folder}"/>
+			<then>
+				<property name="platform.folder" value="android"/>	
+			</then>
+		</if>
+
+		<available file="${resfolder}/fonts/${platform.folder}" type="dir" property="androidfonts.present"/>
+    	<if>
+    		<equals arg1="${androidfonts.present}" arg2="true"/>
+    		<then>
+    	        <copy todir="${assets.dir}/fonts" overwrite="true">
+    	            <fileset dir="${resfolder}/fonts/${platform.folder}" includes="*.*"/>
+    	        </copy>
+    		</then>
+		</if>
+    	
+		<available file="${appfolder}/${outputdir}/${codedir}/themes/android" type="dir" property="androidthemes.present"/>
+		<if>
+    		<equals arg1="${androidthemes.present}" arg2="true"/>
+			<then>
+				<echo>Copying theme files</echo>
+				<copy todir="${assets.dir}" overwrite="true">
+					<fileset dir="${appfolder}/${outputdir}/${codedir}/themes/android" includes="*.theme"/>
+				</copy>
+			</then>	
+		</if>
+		
+    	<!--Copying App icon images -->
+    	<copy todir="${assets.dir}" overwrite="true">
+    		<fileset dir="${resfolder}/build" includes="*.*"/>
+    	</copy>
+		
+		<if>
+			<equals arg1="${hybridmode}" arg2="native"/>
+			<then>
+				<antcall target="copynativeresources"/>
+				<antcall target="copyninepatchimages"/>
+			</then>
+		<else>
+			<if>
+				<equals arg1="${hybridmode}" arg2="wrapper"/>
+				<then>
+					<antcall target="copy-spa-resources"/>
+					<antcall target="copysplashresources"/>
+				</then>
+			<else>
+				<if>
+					<equals arg1="${hybridmode}" arg2="mixed"/>
+					<then>
+						<antcall target="copynativeresources"/>
+						<antcall target="copy-spa-resources"/>
+						<antcall target="copyninepatchimages"/>
+					</then>
+				</if>
+			</else>
+			</if>
+		</else>
+		</if>
+    	
+    	<if>
+    		<not>
+    			  <equals arg1="${logo}" arg2=""/>
+    		</not>
+    		<then>
+    			<echo>Copying icon file ${logo} </echo>
+    			<copy file="${app.dir}/res/drawable/${logo}" tofile="${app.dir}/res/drawable/icon.png" overwrite="true" preservelastmodified="true"/>
+    		</then>
+    	</if> 
+
+    	<mkdir dir="${libs.dir}"/>
+    	<available file="${customlibs.dir}/${platform.folder}" type="dir" property="libraries.dir.available"/>
+    	<if>
+	    	<!--Copying 3rd party libraries -->
+			<equals arg1="${libraries.dir.available}" arg2="true"/>
+    		<then>
+    			<echo>Copying third party libraries</echo>
+				<copy todir="${libs.dir}" overwrite="true" >
+					<fileset dir="${customlibs.dir}/${platform.folder}" includes="*.*"/>
+				</copy>
+			</then>
+			<else>
+				<echo message="No 3rd party libraries found"></echo>
+			</else>
+    	</if>
+		<!-- Done: Copying 3rd party libraries  -->
+		<!-- Copying wrapper classes to src folder-->
+		<available file="${customlibs.src.dir}/${platform.folder}" type="dir" property="ffi.dir.available"/>
+		<if>
+			<equals arg1="${ffi.dir.available}" arg2="true"/>
+			<then>
+				<echo message="Copying ffi templates to src folder"/> 
+				<copy todir="${src.dir}" overwrite="true">
+					<fileset dir="${customlibs.src.dir}/${platform.folder}" includes="**/*.*"/>
+				</copy>
+			</then>
+		</if>
+		<!-- Done: Copying wrapper classes to src folder-->
+		
+		<!--Copying custom widget libraries -->
+		<available file="${customwidgets.dir}/${platform.folder}" type="dir" property="cwlibs.dir.available"/>
+    	<if>
+	    	
+			<equals arg1="${cwlibs.dir.available}" arg2="true"/>
+    		<then>
+    			<echo>Copying third party libraries</echo>
+				<copy todir="${libs.dir}" overwrite="true" >
+					<fileset dir="${customwidgets.dir}/${platform.folder}" includes="*.*"/>
+				</copy>
+			</then>
+			<else>
+				<echo message="No custom widget libraries found"></echo>
+			</else>
+    	</if>
+		<!-- Done: Copying custom widget libraries  -->
+		<!-- Copying custom widget classes to src folder-->
+		<available file="${customwidgets.src.dir}/${platform.folder}" type="dir" property="cwsrc.dir.available"/>
+		<if>
+			<equals arg1="${cwsrc.dir.available}" arg2="true"/>
+			<then>
+				<echo message="Copying custom widget templates to src folder"/> 
+				<copy todir="${src.dir}" overwrite="true">
+					<fileset dir="${customwidgets.src.dir}/${platform.folder}" includes="**/*.*"/>
+				</copy>
+			</then>
+		</if>
+		<!-- Done: Copying custom widget src files -->
+		
+    </target>
+    
+	<target name="copynativeresources">
+        <echo>Copying the native resources to android assets</echo>
+	    
+    	<available file="${resfolder}/${resources.common.folder}" type="dir" property="common.present"/>
+    	<if>
+    		<equals arg1="${common.present}" arg2="true"/>
+    		<then>
+    	        <copy todir="${app.dir}/res/drawable" overwrite="true" preservelastmodified="true">
+    	            <fileset dir="${resfolder}/${resources.common.folder}" includes="*.*"  excludes="*.mp4 *.mov *.avi *.mjpeg *.m4v *.cer"/>
+    	        </copy>
+				<copy todir="${app.dir}/res/raw" overwrite="true" preservelastmodified="true">
+    	            <fileset dir="${resfolder}/${resources.common.folder}" includes="*.mp4 *.mov *.avi *.mjpeg *.m4v *.cer"/>
+    	        </copy>
+    		</then>
+    		<else>
+    	        <copy todir="${app.dir}/res/drawable" overwrite="true" preservelastmodified="true">
+    	            <fileset dir="${resfolder}" includes="*.*" excludes="*.ttf *.otf"/>
+    	        </copy>
+    		</else>
+    	</if>
+		
+		<available file="${resfolder}/${resources.category.common.folder}" type="dir" property="category.common.present"/>
+    	<if>
+    		<equals arg1="${category.common.present}" arg2="true"/>
+    		<then>
+    	        <copy todir="${app.dir}/res/drawable" overwrite="true" preservelastmodified="true">
+    	            <fileset dir="${resfolder}/${resources.category.common.folder}" includes="*.*"  excludes="*.mp4 *.mov *.avi *.mjpeg *.m4v *.cer"/>
+    	        </copy>
+				<copy todir="${app.dir}/res/raw" overwrite="true" preservelastmodified="true">
+    	            <fileset dir="${resfolder}/${resources.category.common.folder}" includes="*.mp4 *.mov *.avi *.mjpeg *.m4v *.cer"/>
+    	        </copy>
+    		</then>
+    		<else>
+    	        <copy todir="${app.dir}/res/drawable" overwrite="true" preservelastmodified="true">
+    	            <fileset dir="${resfolder}" includes="*.*" excludes="*.ttf *.otf"/>
+    	        </copy>
+    		</else>
+    	</if>
+		
+		<if>
+			<equals arg1="${resources.platform.folder}" arg2="$${resources.platform.folder}"/>
+			<then>
+				<property name="resources.platform.folder" value="mobile/native/android"/>	
+			</then>
+		</if>
+		
+		<if>
+			<equals arg1="${platform.folder}" arg2="$${platform.folder}"/>
+			<then>
+				<property name="platform.folder" value="android"/>	
+			</then>
+		</if>
+
+		<available file="${resfolder}/${resources.platform.folder}" type="dir" property="richandroid.present"/>
+    	<if>
+    		<equals arg1="${richandroid.present}" arg2="true"/>
+    		<then>
+    	        <copy todir="${app.dir}/res" overwrite="true" preservelastmodified="true">
+					<dirset dir="${resfolder}/${resources.platform.folder}" includes="drawable*"/>
+					<fileset dir="${resfolder}/${resources.platform.folder}" includes="drawable*/*.*"/>
+    	        </copy>
+				<copy todir="${app.dir}/res/drawable" overwrite="true" preservelastmodified="true">
+					<fileset dir="${resfolder}/${resources.platform.folder}" includes="*.*" excludes="*.mp4 *.mov *.avi *.mjpeg *.m4v"/>
+    	        </copy>
+				<copy todir="${app.dir}/res" overwrite="true" preservelastmodified="true">
+					<dirset dir="${resfolder}/${resources.platform.folder}" includes="layout*"/>
+					<fileset dir="${resfolder}/${resources.platform.folder}" includes="layout*/*.*"/>
+    	        </copy>
+				<copy todir="${app.dir}/res" overwrite="true" preservelastmodified="true">
+					<dirset dir="${resfolder}/${resources.platform.folder}" includes="xml*"/>
+					<fileset dir="${resfolder}/${resources.platform.folder}" includes="xml*/*.*"/>
+    	        </copy>
+				<copy todir="${app.dir}/res" overwrite="true" preservelastmodified="true">
+					<dirset dir="${resfolder}/${resources.platform.folder}" includes="values*"/>
+					<fileset dir="${resfolder}/${resources.platform.folder}" includes="values*/*.*"/>
+				</copy>
+				<copy todir="${app.dir}/res" overwrite="true" preservelastmodified="true">
+					<dirset dir="${resfolder}/${resources.platform.folder}" includes="raw*"/>
+					<fileset dir="${resfolder}/${resources.platform.folder}" includes="raw*/*.*"/>
+				</copy>
+				<copy todir="${app.dir}/res/raw" overwrite="true" preservelastmodified="true">
+					<fileset dir="${resfolder}/${resources.platform.folder}" includes="*.mp4 *.mov *.avi *.mjpeg *.m4v"/>
+				</copy>
+				<copy todir="${app.dir}/res" overwrite="true" preservelastmodified="true">
+					<dirset dir="${resfolder}/${resources.platform.folder}" includes="anim*"/>
+					<fileset dir="${resfolder}/${resources.platform.folder}" includes="anim*/*.*"/>
+				</copy>
+				<available file="${resfolder}/${resources.platform.folder}/assets" type="dir" property="android.res.assets.present"/>
+				<if>
+					<equals arg1="${android.res.assets.present}" arg2="true"/>
+					<then>
+						<copy todir="${assets.dir}" overwrite="true" preservelastmodified="true">
+							<dirset dir="${resfolder}/${resources.platform.folder}/assets" />
+							<fileset dir="${resfolder}/${resources.platform.folder}/assets" />
+						</copy>
+					</then>
+				</if>
+    		</then>
+    		<else>
+				<available file="${resfolder}/${platform.folder}" type="dir" property="android.present"/>
+				<if>
+					<equals arg1="${android.present}" arg2="true"/>
+					<then>
+						<copy todir="${app.dir}/res" overwrite="true" preservelastmodified="true">
+							<dirset dir="${resfolder}/${platform.folder}" includes="drawable*"/>
+							<fileset dir="${resfolder}/${platform.folder}" includes="drawable*/*.*"/>
+						</copy>
+						<copy todir="${app.dir}/res/drawable" overwrite="true" preservelastmodified="true">
+							<fileset dir="${resfolder}/${platform.folder}" includes="*.*"/>
+						</copy>
+					</then>
+				</if>
+    		</else>
+    	</if>
+		<if>
+    		<equals arg1="${common.present}" arg2="true"/>
+    		<then>
+    	        <copy todir="${assets.dir}" overwrite="true" preservelastmodified="true"> 
+    	            <fileset dir="${resfolder}/${resources.common.folder}" includes="*.cer" />
+    	        </copy>
+			</then>
+    	</if>
+		<if>
+    		<equals arg1="${category.common.present}" arg2="true"/>
+    		<then>
+    	        <copy todir="${assets.dir}" overwrite="true" preservelastmodified="true">
+    	            <fileset dir="${resfolder}/${resources.category.common.folder}" includes="*.cer" />
+    	        </copy>
+			</then>
+    	</if>
+ 	</target>
+	
+	<target name="copyninepatchimages">
+        <echo>Copying the nine patch images and delete the actual png image in android drawable folder</echo>
+		<for param="file">
+			<path>
+				<fileset dir="${app.dir}/res/drawable">
+					<include name="**/*.9.png"/>
+				</fileset>
+			</path>
+			<sequential>    			
+				<antcall target="check-for-actual-png-file">
+					<param name="actual-png" value="@{file}" />
+				</antcall>		
+			</sequential>				
+		</for>
+	</target>
+	
+	<target name="check-for-actual-png-file">	
+		<basename file="${actual-png}" property="actual-pngfile-name" />				
+		<propertyregex property="actual.png" input="${actual-pngfile-name}" regexp="(.*)\.9\.png" select="\1.png" casesensitive="false" />
+		<delete file="${app.dir}/res/drawable/${actual.png}" />
+	</target>
+	
+	<target name="copy-spa-resources">
+		<mkdir dir="${assets.dir}/web"/>
+		<mkdir dir="${assets.dir}/web/images"/>
+		
+		<available file="${webmodule.loc}" type="dir" property="webres.present"/>
+    	<if>
+    		<equals arg1="${webres.present}" arg2="true"/>
+    		<then>
+    	        <copy todir="${assets.dir}/web" overwrite="true" preservelastmodified="true">
+    	            <fileset dir="${webmodule.loc}" includes="**/*.*"/>
+    	        </copy>
+			</then>
+    	</if>
+		
+		
+		<foreach target="copy-spa-image-folder" param="spaimgdir.res" inheritall="true">
+			<path>
+				<dirset dir="${resfolder}/${resources.mobile.web}/spaandroid">
+					<include name="images*"/>
+				</dirset>
+			</path>
+		</foreach>
+		
+		<available file="${hybridmode.dir}" type="dir" property="hybridmode.present"/>
+    	<if>
+    		<equals arg1="${hybridmode.present}" arg2="true"/>
+    		<then>    	    
+    	        <copy todir="${assets.dir}/web" overwrite="true" preservelastmodified="true">
+    	            <fileset dir="${hybridmode.dir}" includes="**/*.*"/>
+    	        </copy>
+			</then>
+    	</if>
+		<copy file="extres/nativeplatform.js" tofile="${assets.dir}/web/appjs/nativeplatform.js" overwrite="true"/>
+		
+	</target>
+	
+ 	<target name="copy-spa-image-folder">
+		<propertyregex 	property="spaimgdir.assets" input="${spaimgdir.res}" regexp=".*images(.*)$" select="\1"/>
+		<mkdir dir="${assets.dir}/web/images/${spaimgdir.assets}"/>
+		
+		<available file="${resfolder}/${resources.common.folder}" type="dir" property="common.present"/>
+    	<if>
+    		<equals arg1="${common.present}" arg2="true"/>
+    		<then>
+				<copy todir="${assets.dir}/web/images/${spaimgdir.assets}" overwrite="true" preservelastmodified="true">
+					<fileset dir="${resfolder}/${resources.common.folder}" includes="*.*" excludes="*.cer" />
+				</copy>
+			</then>
+		</if>
+		
+		<available file="${resfolder}/${resources.category.common.folder}" type="dir" property="category.common.present"/>
+		<if>
+    		<equals arg1="${category.common.present}" arg2="true"/>
+    		<then>
+				<copy todir="${assets.dir}/web/images/${spaimgdir.assets}" overwrite="true" preservelastmodified="true">
+					<fileset dir="${resfolder}/${resources.category.common.folder}" includes="*.*" excludes="*.cer" />
+				</copy>
+			</then>
+		</if>
+		
+		<available file="${resfolder}/${resources.mobile.web}/spaandroid" type="dir" property="spaandroid.present"/>
+    	<if>
+			<equals arg1="${spaandroid.present}" arg2="true"/>
+    		<then>
+				<copy todir="${assets.dir}/web/images/${spaimgdir.assets}" overwrite="true" preservelastmodified="true">
+					<fileset dir="${resfolder}/${resources.mobile.web}/spaandroid" includes="*.*"/>
+				</copy>
+			</then>
+		</if>
+		
+		<copy todir="${assets.dir}/web/images/${spaimgdir.assets}" overwrite="true" preservelastmodified="true">
+			<fileset dir="${resfolder}/${resources.mobile.web}/spaandroid/images${spaimgdir.assets}" includes="*.*"/>
+		</copy>
+		
+	</target>
+    
+	<target name="copysplashresources">
+		<propertyregex property="splashAnimImages" input="${splash.animation.images}" regexp="," replace=" "/>
+		<echo>Copying logo and splash resources *${logo}* *${splashScreenImg}* *${splashAnimImages}*</echo>
+    	<available file="${resfolder}/${resources.common.folder}" type="dir" property="common.present"/>
+    	<if>
+    		<equals arg1="${common.present}" arg2="true"/>
+    		<then>
+    	        <copy todir="${app.dir}/res/drawable" overwrite="true" preservelastmodified="true">
+    	            <fileset dir="${resfolder}/${resources.common.folder}" includes="${logo} ${splashScreenImg} ${splashAnimImages}"/>
+    	        </copy>
+				<copy todir="${app.dir}/res/raw" overwrite="true" preservelastmodified="true">
+    	            <fileset dir="${resfolder}/${resources.common.folder}" includes="${splash.video}"/>
+    	        </copy>
+    		</then>
+    		<else>
+    	        <copy todir="${app.dir}/res/drawable" overwrite="true" preservelastmodified="true">
+    	            <fileset dir="${resfolder}" includes="${logo} ${splashScreenImg} ${splashAnimImages}"/>
+    	        </copy>
+    		</else>
+    	</if>
+		
+		<available file="${resfolder}/${resources.category.common.folder}" type="dir" property="category.common.present"/>
+    	<if>
+    		<equals arg1="${category.common.present}" arg2="true"/>
+    		<then>
+    	        <copy todir="${app.dir}/res/drawable" overwrite="true" preservelastmodified="true">
+    	            <fileset dir="${resfolder}/${resources.category.common.folder}" includes="${logo} ${splashScreenImg} ${splashAnimImages}"/>
+    	        </copy>
+				<copy todir="${app.dir}/res/raw" overwrite="true" preservelastmodified="true">
+    	            <fileset dir="${resfolder}/${resources.category.common.folder}" includes="${splash.video}"/>
+    	        </copy>
+    		</then>
+    		<else>
+    	        <copy todir="${app.dir}/res/drawable" overwrite="true" preservelastmodified="true">
+    	            <fileset dir="${resfolder}" includes="${logo} ${splashScreenImg} ${splashAnimImages}"/>
+    	        </copy>
+    		</else>
+    	</if>
+		
+		<if>
+			<equals arg1="${resources.platform.folder}" arg2="$${resources.platform.folder}"/>
+			<then>
+				<property name="resources.platform.folder" value="mobile/native/android"/>	
+			</then>
+		</if>
+		
+		<if>
+			<equals arg1="${platform.folder}" arg2="$${platform.folder}"/>
+			<then>
+				<property name="platform.folder" value="android"/>	
+			</then>
+		</if>
+
+		<available file="${resfolder}/${resources.platform.folder}" type="dir" property="richandroid.present"/>
+    	<if>
+    		<equals arg1="${richandroid.present}" arg2="true"/>
+    		<then>
+			    <copy todir="${app.dir}/res" overwrite="true" preservelastmodified="true">
+					<dirset dir="${resfolder}/${resources.platform.folder}" includes="drawable*"/>
+    	        </copy>
+				<if>
+					<not>
+						<equals arg1="${logo}" arg2=""/>
+					</not>
+					<then>
+					    <copy todir="${app.dir}/res" overwrite="true" preservelastmodified="true">
+							<fileset dir="${resfolder}/${resources.platform.folder}" includes="drawable*/${logo}"/>
+						</copy>
+					</then>
+				</if>
+				<if>
+					<not>
+						<equals arg1="${splashScreenImg}" arg2=""/>
+					</not>
+					<then>
+					    <copy todir="${app.dir}/res" overwrite="true" preservelastmodified="true">
+							<fileset dir="${resfolder}/${resources.platform.folder}" includes="drawable*/${splashScreenImg}"/>
+						</copy>
+					</then>
+				</if>
+				
+				<for list="${splash.animation.images}" delimiter="," param = "val">
+					<sequential>
+					<echo>copying @{val} </echo>
+					<copy todir="${app.dir}/res" overwrite="true" preservelastmodified="true">
+						<fileset dir="${resfolder}/${resources.platform.folder}" includes="drawable*/@{val}"/>
+					</copy>
+					</sequential>
+				</for>
+				<copy todir="${app.dir}/res/drawable" overwrite="true" preservelastmodified="true">
+					<fileset dir="${resfolder}/${resources.platform.folder}" includes="${logo} ${splashScreenImg} ${splashAnimImages}"/>
+    	        </copy>
+				<if>
+					<not>
+						<equals arg1="${splash.video}" arg2=""/>
+					</not>
+					<then>
+						<copy todir="${app.dir}/res" overwrite="true" preservelastmodified="true">
+							<dirset dir="${resfolder}/${resources.platform.folder}" includes="raw*"/>
+							<fileset dir="${resfolder}/${resources.platform.folder}" includes="raw*/${splash.video}"/>
+						</copy>
+					</then>
+				</if>
+				<copy todir="${app.dir}/res/raw" overwrite="true" preservelastmodified="true">
+					<fileset dir="${resfolder}/${resources.platform.folder}" includes="${splash.video}"/>
+				</copy>
+    		</then>
+    		<else>
+				<available file="${resfolder}/${platform.folder}" type="dir" property="android.present"/>
+				<if>
+					<equals arg1="${android.present}" arg2="true"/>
+					<then>
+						<copy todir="${app.dir}/res" overwrite="true" preservelastmodified="true">
+							<dirset dir="${resfolder}/${platform.folder}" includes="drawable*"/>
+						</copy>
+						<for list="${splash.animation.images}" delimiter="," param = "val">
+							<sequential>
+								<echo>copying @{val} </echo>
+								<copy todir="${app.dir}/res" overwrite="true" preservelastmodified="true">
+									<fileset dir="${resfolder}/${platform.folder}" includes="drawable*/@{val}"/>
+								</copy>
+							</sequential>
+						</for>
+						<copy todir="${app.dir}/res/drawable" overwrite="true" preservelastmodified="true">
+							<fileset dir="${resfolder}/${platform.folder}" includes="${logo} ${splashScreenImg} ${splashAnimImages}"/>
+						</copy>
+					</then>
+				</if>
+    		</else>
+    	</if>
+ 	</target>
+	
+	<target name="generatezip">
+	
+	<copy file="${assets.dir}/js/startup.js" tofile="${jetty_fppath}/src.zip"/>
+	<zip file="${jetty_fppath}/fonts.zip" basedir="${assets.dir}/fonts"/>
+	<zip file="${jetty_fppath}/themes.zip" basedir="${assets.dir}" includes="*.theme"/>
+	<zip file="${jetty_fppath}/i18n.zip" basedir="${assets.dir}" includes="*.prop"/>
+	<zip file="${jetty_fppath}/images.zip" basedir="${app.dir}/res/drawable"/>
+	<zip file="${jetty_fppath}/raw.zip" basedir="${app.dir}/res/raw"/>
+	<echo file = "${jetty_fppath}/metafile.info">${metainfo}</echo>
+	 <delete dir="${dist.dir}/fpres"/>
+	</target>
+	
+    <target name="all" depends="init, copyjar, gen, copyassets, generatezip">
+    </target>
+</project>

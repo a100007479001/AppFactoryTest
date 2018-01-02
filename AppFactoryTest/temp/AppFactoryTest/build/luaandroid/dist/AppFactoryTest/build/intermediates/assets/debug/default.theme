@@ -1,0 +1,52 @@
+{
+    "slDynamicNotificationForm": {
+        "wType": "WatchDynamicNotificationForm",
+        "bg_type": "one",
+        "border_color": "ffffff00",
+        "background_color": "00000000"
+    },
+    "slForm": {
+        "wType": "Form",
+        "bg_type": "one",
+        "border_color": "ffffff00",
+        "background_color": "7e7e7e00"
+    },
+    "slLabel": {
+        "wType": "Label",
+        "bg_type": "one",
+        "border_color": "42424200",
+        "border_style": "plain",
+        "border_width": 0,
+        "border_type": 0,
+        "font_color": "42424200",
+        "font_name": "Helvetica",
+        "font_size": 214,
+        "font_style": "normal",
+        "font_weight": "normal",
+        "background_color": "00000064"
+    },
+    "slPopup": {
+        "wType": "Popup",
+        "bg_type": "one",
+        "background_color": "7e7e7e00"
+    },
+    "slStaticNotificationForm": {
+        "wType": "WatchStaticNotificationForm",
+        "bg_type": "one",
+        "background_color": "00000000"
+    },
+    "slTitleBar": {
+        "wType": "TitleBar",
+        "bg_type": "one",
+        "font_color": "33333300",
+        "font_name": "Arial, Helvetica, sans-serif",
+        "font_size": 100,
+        "font_weight": "normal",
+        "background_color": "ffffff00"
+    },
+    "slWatchForm": {
+        "wType": "Form",
+        "bg_type": "one",
+        "background_color": "00000000"
+    }
+}
